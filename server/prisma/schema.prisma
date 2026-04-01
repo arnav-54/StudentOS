@@ -1,0 +1,87 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String           @id @default(auto()) @map("_id") @db.ObjectId
+  email        String           @unique
+  password     String
+  name         String
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  profile      Profile?
+  timeline     TimelineItem[]
+  applications JobApplication[]
+  documents    Document[]
+  notes        Note[]
+}
+
+model Profile {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @unique @db.ObjectId
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  school        String?
+  degree        String?
+  major         String?
+  gradYear      Int?
+  skills        String[]
+  languages     String[]
+  bio           String?
+  avatar        String?
+  githubUrl     String?
+  leetcodeUrl   String?
+  codeforcesUrl String?
+  isPublic      Boolean  @default(false)
+  publicSlug    String?  @unique
+}
+
+model TimelineItem {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // "project", "achievement", "hackathon", "internship", "research", "leadership"
+  title       String
+  subtitle    String?  // company, organizers, or role
+  description String?
+  date        String   // e.g. "Jun 2026"
+  link        String?
+}
+
+model JobApplication {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company     String
+  role        String
+  status      String   // "wishlist", "applied", "interview", "offer", "rejected"
+  appliedDate String?
+  notes       String?
+  location    String?  // e.g. "Remote", "San Francisco"
+}
+
+model Document {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  type      String   // "resume", "cover_letter", "certificate", "transcript"
+  url       String
+  createdAt DateTime @default(now())
+}
+
+model Note {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  content   String   // Markdown string content
+  category  String   // "academic" | "interview" | "general"
+  linkedTo  String?  // Reference ID of JobApplication or Roadmap Phase
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
