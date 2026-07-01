@@ -2,12 +2,11 @@
   "name": "studentos-server",
   "version": "1.0.0",
   "description": "Backend API for StudentOS SaaS Application",
-  "main": "dist/index.js",
+  "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "tsc && (tsc -w & nodemon dist/index.js)",
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
     "prisma:generate": "prisma generate"
   },
   "dependencies": {
@@ -28,19 +27,7 @@
     "socket.io": "^4.7.5"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
-    "@types/cookie-parser": "^1.4.7",
-    "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
-    "@types/express-session": "^1.19.0",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^20.12.7",
-    "@types/passport": "^1.0.17",
-    "@types/passport-github2": "^1.2.9",
-    "@types/passport-google-oauth20": "^2.0.17",
     "nodemon": "^3.1.0",
-    "prisma": "^5.12.1",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.4.5"
+    "prisma": "^5.12.1"
   }
 }

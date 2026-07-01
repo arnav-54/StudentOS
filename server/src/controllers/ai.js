@@ -40,12 +40,12 @@ export const optimizeResumeBullets = async (req, res) => {
     }
 };
 export const generateCoverLetter = async (req, res) => {
-    const { company, role, jobDescription, tone } = req.body;
+    const { company, role, jobDescription, tone, name } = req.body;
     if (!company || !role) {
         return res.status(400).json({ message: 'Company and role are required.' });
     }
     try {
-        const coverLetter = await AIService.generateCoverLetter(company, role, jobDescription || '', tone || 'professional');
+        const coverLetter = await AIService.generateCoverLetter(company, role, jobDescription || '', tone || 'professional', name || 'Arnav kumar');
         if (!coverLetter) {
             // Force controller error to trigger high-fidelity frontend fallback if Gemini fails/key is missing
             return res.status(502).json({ message: 'Gemini service unavailable. Using mock.' });
@@ -72,5 +72,19 @@ export const generateChatReply = async (req, res) => {
     catch (err) {
         console.error('Chat assistant error:', err);
         return res.status(500).json({ message: 'Failed to generate chat reply.' });
+    }
+};
+export const analyzeResumeATS = async (req, res) => {
+    const { resumeText, targetRole } = req.body;
+    if (!resumeText) {
+        return res.status(400).json({ message: 'Resume text content is required.' });
+    }
+    try {
+        const report = await AIService.analyzeResume(resumeText, targetRole || 'Software Developer');
+        return res.json({ report });
+    }
+    catch (err) {
+        console.error('Resume ATS analysis error:', err);
+        return res.status(500).json({ message: 'Failed to analyze resume.' });
     }
 };

@@ -89,6 +89,55 @@ export class AIService {
         // High fidelity mock fallback
         return `Orchestrated microservices system optimization: refactored asynchronous API handlers to reduce overhead latency by 18%; configured Docker containers for robust continuous deployment pipelines.`;
     }
+    static async analyzeResume(resumeText, targetRole) {
+        const apiKey = getApiKey();
+        if (apiKey) {
+            try {
+                const genAI = new GoogleGenerativeAI(apiKey);
+                const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+                const prompt = `You are an expert ATS (Applicant Tracking System) parser and senior recruiter.
+Analyze the following resume text against the target role: "${targetRole || 'Software Developer'}".
+
+Resume Text:
+"""
+${resumeText}
+"""
+
+Provide your feedback in a structured JSON format containing:
+1. "score": an integer score between 0 and 100.
+2. "strengths": an array of strings listing key strengths of the resume.
+3. "weaknesses": an array of strings listing weaknesses or missing elements.
+4. "missingKeywords": an array of strings listing critical keywords or skills missing from the resume.
+5. "recommendations": an array of strings listing actionable recommendations to improve the ATS score.
+
+Response must be pure JSON only. Do not wrap it in markdown tags.`;
+                const result = await model.generateContent(prompt);
+                const text = result.response.text();
+                const cleaned = text.replace(/```json|```/g, '').trim();
+                return JSON.parse(cleaned);
+            }
+            catch (err) {
+                console.error('Gemini error analyzing resume:', err);
+            }
+        }
+        // High fidelity fallback
+        return {
+            score: 74,
+            strengths: [
+                "Good representation of project stacks.",
+                "Education and contact credentials are laid out clearly."
+            ],
+            weaknesses: [
+                "Lacks strong action verbs in descriptions.",
+                "No clear metrics indicating project impact."
+            ],
+            missingKeywords: ["Docker", "CI/CD pipelines", "AWS", "Jest Testing"],
+            recommendations: [
+                "Add bullet points highlighting numbers (e.g., optimized speeds by 15%, served 100+ users).",
+                "Integrate cloud deployment keywords like Docker and AWS into skills section."
+            ]
+        };
+    }
     static async gradeInterview(role, description, answers) {
         const apiKey = getApiKey();
         if (apiKey) {
@@ -131,17 +180,17 @@ export class AIService {
             ]
         };
     }
-    static async generateCoverLetter(company, role, description, tone) {
+    static async generateCoverLetter(company, role, description, tone, studentName = 'Arnav kumar') {
         const apiKey = getApiKey();
         if (apiKey) {
             try {
                 const genAI = new GoogleGenerativeAI(apiKey);
                 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-                const prompt = `Write a professional cover letter for a student applying to the role of "${role}" at "${company}". 
+                const prompt = `Write a professional cover letter for a student named "${studentName}" applying to the role of "${role}" at "${company}". 
         Tone of writing: ${tone}. 
         Target job description or requirements: "${description || 'Not specified'}".
         The applicant is a student who has built "StudentOS", a premium full-stack academic and professional dashboard system utilizing React, TypeScript, Express, and Prisma.
-        Make the letter punchy, persuasive, and tailored to the company. Return ONLY the cover letter plain text.`;
+        Make the letter punchy, persuasive, and tailored to the company. Return ONLY the cover letter plain text. Sign off using the student's name: "${studentName}".`;
                 const result = await model.generateContent(prompt);
                 return result.response.text();
             }
