@@ -13,13 +13,6 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-}
-
 const quickPrompts = [
   "Help me write a cold email to a recruiter",
   "Explain Big-O notation for my interview",
@@ -28,7 +21,7 @@ const quickPrompts = [
   "Suggest resume improvements for SDE roles",
 ];
 
-const mockResponses: Record<string, string> = {
+const mockResponses = {
   default: `Great question! Here's what I'd recommend based on your profile:\n\n**Key Action Items:**\n1. Focus on quantifying your project impact with metrics (e.g., "reduced load time by 40%")\n2. Tailor your resume keywords to match the specific job description\n3. Practice explaining your projects in the STAR format\n\nWould you like me to help with any of these specifically?`,
   email: `Here's a template for a cold recruiter email:\n\n**Subject:** Software Engineering Intern — [Your University] Student with Full-Stack Experience\n\nHi [Recruiter Name],\n\nI'm [Your Name], a [Year] studying [Major] at [University]. I came across the [Role] position at [Company] and I'm genuinely excited about [specific thing about the company].\n\nI recently built StudentOS — a full-stack SaaS platform with AI-powered career tools, React/TypeScript frontend, and Express backend. I'd love to bring this kind of product thinking to your team.\n\nWould you be open to a 15-minute chat?\n\nBest,\n[Your Name]`,
   "big-o": `**Big-O Notation Crash Course for Interviews:**\n\n| Complexity | Name | Example |\n|---|---|---|\n| O(1) | Constant | Hash table lookup |\n| O(log n) | Logarithmic | Binary search |\n| O(n) | Linear | Array traversal |\n| O(n log n) | Linearithmic | Merge sort |\n| O(n²) | Quadratic | Nested loops |\n| O(2ⁿ) | Exponential | Recursive fibonacci |\n\n**Interview Tip:** Always discuss time AND space complexity. Mention trade-offs like "I can reduce time to O(n) by using a hash map, trading O(n) extra space."`,
@@ -36,7 +29,7 @@ const mockResponses: Record<string, string> = {
   system: `**System Design Interview Framework (FAANG-ready):**\n\n**1. Clarify Requirements (2-3 min)**\n- Functional vs non-functional requirements\n- Scale: users, QPS, data volume\n\n**2. High-Level Design (5-7 min)**\n- API endpoints\n- Database schema\n- Core architecture diagram\n\n**3. Deep Dive (10-15 min)**\n- Database choice & sharding strategy\n- Caching layers (Redis, CDN)\n- Load balancing & horizontal scaling\n\n**4. Address Bottlenecks (3-5 min)**\n- Single points of failure\n- Rate limiting\n- Monitoring & alerting\n\nPractice with: URL shortener, chat system, or notification service.`,
 };
 
-function getSmartResponse(userMessage: string): string {
+function getSmartResponse(userMessage) {
   const lower = userMessage.toLowerCase();
   if (lower.includes('email') || lower.includes('recruiter') || lower.includes('cold')) {
     return mockResponses.email;
@@ -53,10 +46,10 @@ function getSmartResponse(userMessage: string): string {
   return mockResponses.default;
 }
 
-const AIChatAssistant: React.FC = () => {
+const AIChatAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState([
     {
       id: 'welcome',
       role: 'assistant',
@@ -66,8 +59,8 @@ const AIChatAssistant: React.FC = () => {
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -79,11 +72,11 @@ const AIChatAssistant: React.FC = () => {
     }
   }, [isOpen]);
 
-  const handleSend = async (text?: string) => {
+  const handleSend = async (text) => {
     const messageText = text || input.trim();
     if (!messageText) return;
 
-    const userMessage: Message = {
+    const userMessage = {
       id: Date.now().toString(),
       role: 'user',
       content: messageText,
@@ -100,7 +93,7 @@ const AIChatAssistant: React.FC = () => {
         message: messageText,
       });
       if (response.data?.reply) {
-        const assistantMessage: Message = {
+        const assistantMessage = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
           content: response.data.reply,
@@ -116,7 +109,7 @@ const AIChatAssistant: React.FC = () => {
 
     // Mock fallback with typing delay
     setTimeout(() => {
-      const assistantMessage: Message = {
+      const assistantMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: getSmartResponse(messageText),
@@ -127,7 +120,7 @@ const AIChatAssistant: React.FC = () => {
     }, 800 + Math.random() * 1200);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -143,14 +136,14 @@ const AIChatAssistant: React.FC = () => {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-2xl bg-gradient-to-tr from-brand-primary to-brand-accent text-white shadow-xl shadow-brand-primary/30 flex items-center justify-center hover:shadow-2xl transition-shadow"
+            className="fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full bg-gradient-to-tr from-brand-primary via-brand-violet to-brand-cyberPink text-white shadow-2xl flex items-center justify-center cursor-pointer animate-orb-glow border border-white/15"
           >
-            <MessageCircle className="h-6 w-6" />
+            <Sparkles className="h-6.5 w-6.5 animate-spin" style={{ animationDuration: '6s' }} />
             {/* Notification ping */}
-            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-brand-success border-2 border-white dark:border-zinc-950 animate-pulse" />
+            <span className="absolute top-1.5 right-1.5 h-3.5 w-3.5 rounded-full bg-emerald-400 border-2 border-slate-950 animate-pulse" />
           </motion.button>
         )}
       </AnimatePresence>

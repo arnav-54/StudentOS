@@ -19,7 +19,7 @@ import CalendarPage from './pages/CalendarPage';
 import NotesPage from './pages/NotesPage';
 
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -37,7 +37,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-const AppRoutes: React.FC = () => {
+const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
@@ -70,7 +70,7 @@ const AppRoutes: React.FC = () => {
   );
 };
 
-const App: React.FC = () => {
+const App = () => {
   return (
     <ThemeProvider>
       <AuthProvider>

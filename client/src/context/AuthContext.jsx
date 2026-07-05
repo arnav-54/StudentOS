@@ -1,24 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  token?: string;
-}
-
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (name: string, email: string, password: string) => Promise<boolean>;
-  logout: () => void;
-  mockLogin: () => Promise<void>;
-  updateUser: (name: string, email: string) => void;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext(undefined);
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
@@ -38,8 +21,8 @@ axios.interceptors.request.use((config) => {
   return config;
 });
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -74,7 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
             // Token valid
             setUser(parsed);
-          } catch (e: any) {
+          } catch (e) {
             if (e.response?.status === 401 || e.response?.status === 403) {
               // Token invalid/expired — try to reissue
               try {
@@ -108,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email, password) => {
     try {
       const response = await axios.post(`${API_URL}/auth/login`, { email, password });
       if (response.data && response.data.user) {
@@ -128,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return false;
   };
 
-  const signup = async (name: string, email: string, password: string): Promise<boolean> => {
+  const signup = async (name, email, password) => {
     try {
       const response = await axios.post(`${API_URL}/auth/register`, { name, email, password });
       if (response.data && response.data.user) {
@@ -157,7 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await axios.post(`${API_URL}/auth/demo`);
       if (response.data && response.data.token) {
-        const userData: User = {
+        const userData = {
           id: response.data.user.id,
           name: response.data.user.name,
           email: response.data.user.email,
@@ -171,12 +154,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // server down — fallback with warning
     }
     // Offline fallback (buttons won't work without server)
-    const fallback: User = { id: 'demo-user-id', name: 'Alex Mercer', email: 'demo@studentos.app', token: 'offline' };
+    const fallback = { id: 'demo-user-id', name: 'Alex Mercer', email: 'demo@studentos.app', token: 'offline' };
     setUser(fallback);
     localStorage.setItem('studentos_user', JSON.stringify(fallback));
   };
 
-  const updateUser = (name: string, email: string) => {
+  const updateUser = (name, email) => {
     if (user) {
       const updated = { ...user, name, email };
       setUser(updated);

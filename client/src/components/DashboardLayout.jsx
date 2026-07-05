@@ -3,13 +3,14 @@ import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
 import AIChatAssistant from './AIChatAssistant';
+import CommandPalette from './CommandPalette';
 import { AnimatePresence, motion } from 'framer-motion';
 
-const DashboardLayout: React.FC = () => {
+const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
-    <div className="flex min-h-screen bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-zinc-100 transition-colors duration-300">
+    <div className="flex h-screen overflow-hidden w-screen bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-zinc-100 transition-colors duration-300">
       {/* Sidebar component */}
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
@@ -40,6 +41,9 @@ const DashboardLayout: React.FC = () => {
 
       {/* Floating AI Chat Assistant */}
       <AIChatAssistant />
+
+      {/* Global Command Palette (Cmd+K) */}
+      <CommandPalette />
     </div>
   );
 };
