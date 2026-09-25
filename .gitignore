@@ -3,11 +3,16 @@ node_modules/
 client/node_modules/
 server/node_modules/
 
-# Environment variables
+# Environment variables & secrets (NEVER commit secrets)
 .env
 .env.*
+!.env.example
 client/.env
+client/.env.*
+!client/.env.example
 server/.env
+server/.env.*
+!server/.env.example
 
 # Build outputs
 dist/
