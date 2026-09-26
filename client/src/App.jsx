@@ -17,6 +17,7 @@ import Achievements from './pages/Achievements';
 import CoverLetterGenerator from './pages/CoverLetterGenerator';
 import CalendarPage from './pages/CalendarPage';
 import NotesPage from './pages/NotesPage';
+import PublicPortfolioSettings from './pages/PublicPortfolioSettings';
 
 
 const ProtectedRoute = ({ children }) => {
@@ -53,6 +54,7 @@ const AppRoutes = () => {
       >
         <Route index element={<DashboardHome />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="portfolio-settings" element={<PublicPortfolioSettings />} />
         <Route path="timeline" element={<TimelinePortfolio />} />
         <Route path="resume" element={<ResumeBuilder />} />
         <Route path="ai" element={<AIHub />} />
