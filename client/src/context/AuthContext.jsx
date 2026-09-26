@@ -32,19 +32,10 @@ export const AuthProvider = ({ children }) => {
       try {
         const parsed = JSON.parse(storedUser);
         
-        // Check for invalid mock IDs that break MongoDB
+        // Check for invalid user IDs that would break MongoDB
         if (parsed.id && (parsed.id.includes('mock-') || parsed.id === 'offline' || parsed.id.length !== 24)) {
-          console.warn('Detected invalid userId format. Switching to demo mode...');
+          console.warn('Detected invalid userId format. Clearing session.');
           localStorage.removeItem('studentos_user');
-          // Auto-login with demo
-          try {
-            const resp = await axios.post(`${API_URL}/auth/demo`);
-            if (resp.data?.token) {
-              const demoUser = { ...resp.data.user, token: resp.data.token };
-              setUser(demoUser);
-              localStorage.setItem('studentos_user', JSON.stringify(demoUser));
-            }
-          } catch {}
           setLoading(false);
           return;
         }
@@ -136,28 +127,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('studentos_user');
   };
 
-  const mockLogin = async () => {
-    try {
-      const response = await axios.post(`${API_URL}/auth/demo`);
-      if (response.data && response.data.token) {
-        const userData = {
-          id: response.data.user.id,
-          name: response.data.user.name,
-          email: response.data.user.email,
-          token: response.data.token,
-        };
-        setUser(userData);
-        localStorage.setItem('studentos_user', JSON.stringify(userData));
-        return;
-      }
-    } catch (e) {
-      // server down — fallback with warning
-    }
-    // Offline fallback (buttons won't work without server)
-    const fallback = { id: 'demo-user-id', name: 'Alex Mercer', email: 'demo@studentos.app', token: 'offline' };
-    setUser(fallback);
-    localStorage.setItem('studentos_user', JSON.stringify(fallback));
-  };
 
   const updateUser = (name, email) => {
     if (user) {
@@ -168,7 +137,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, mockLogin, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -5,12 +5,34 @@ import passport from 'passport';
 const router = Router();
 router.post('/register', register);
 router.post('/login', login);
-// Demo login — returns a real JWT for the demo user
-router.post('/demo', (req, res) => {
-    const token = generateAccessToken({ userId: 'demo-user-id', email: 'demo@studentos.app' });
+const DEMO_USER_ID = '6a3e37a32639894522d98aa8';
+const DEMO_EMAIL = 'demo@studentos.app';
+const DEMO_NAME = 'Alex Mercer';
+
+// Demo login — returns a real JWT for the demo user with valid 24-hex ObjectId
+router.post('/demo', async (req, res) => {
+    try {
+        const { prisma } = await import('../prisma/client.js');
+        let user = await prisma.user.findUnique({ where: { id: DEMO_USER_ID } }).catch(() => null);
+        if (!user) {
+            await prisma.user.upsert({
+                where: { email: DEMO_EMAIL },
+                update: {},
+                create: {
+                    id: DEMO_USER_ID,
+                    email: DEMO_EMAIL,
+                    name: DEMO_NAME,
+                    password: 'demo-password-hash',
+                }
+            }).catch(() => null);
+        }
+    } catch (e) {
+        // Non-blocking fallback
+    }
+    const token = generateAccessToken({ userId: DEMO_USER_ID, email: DEMO_EMAIL });
     return res.json({
         token,
-        user: { id: 'demo-user-id', name: 'Alex Mercer', email: 'demo@studentos.app' },
+        user: { id: DEMO_USER_ID, name: DEMO_NAME, email: DEMO_EMAIL },
     });
 });
 // Token reissue — for existing users whose token expired. Takes userId + email, returns fresh token.
@@ -35,11 +57,11 @@ router.post('/reissue', async (req, res) => {
 });
 // Quick reset endpoint for dev — clears bad localStorage and returns demo token
 router.get('/reset', (req, res) => {
-    const token = generateAccessToken({ userId: 'demo-user-id', email: 'demo@studentos.app' });
+    const token = generateAccessToken({ userId: DEMO_USER_ID, email: DEMO_EMAIL });
     return res.json({
         message: 'localStorage cleared. Use this fresh token.',
         token,
-        user: { id: 'demo-user-id', name: 'Alex Mercer', email: 'demo@studentos.app' },
+        user: { id: DEMO_USER_ID, name: DEMO_NAME, email: DEMO_EMAIL },
     });
 });
 // Google OAuth
