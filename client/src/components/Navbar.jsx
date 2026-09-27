@@ -7,8 +7,6 @@ import {
   Bell, 
   Search, 
   Menu,
-  X,
-  Sparkles,
   GraduationCap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -53,12 +51,7 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
 
       {/* Right section: AI Tag + Theme + Notifications + Profile */}
       <div className="flex items-center gap-3">
-        {/* Premium AI Status */}
-        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-brand-primary/10 to-brand-violet/10 dark:from-brand-primary/20 dark:to-brand-violet/20 border border-brand-primary/20 dark:border-brand-violet/30 text-brand-primary dark:text-emerald-400 shadow-sm">
-          <Sparkles className="h-3 w-3 text-brand-violet animate-spin" style={{ animationDuration: '3s' }} />
-          <span>AI Engine Connected</span>
-        </div>
- 
+
         {/* Theme Toggle */}
         <motion.button
           whileHover={{ scale: 1.05 }}

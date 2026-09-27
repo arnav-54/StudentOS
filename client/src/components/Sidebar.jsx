@@ -14,14 +14,14 @@ import {
   ChevronLeft,
   ChevronRight,
   GraduationCap,
-  BarChart3,
   Trophy,
   Mail,
   Calendar,
-  BookOpen
+  BookOpen,
+  Globe
 } from 'lucide-react';
 
-const Sidebar = ({ isOpen, setIsOpen }) => {
+const Sidebar = ({ isOpen, setIsOpen, isMobile }) => {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
 
@@ -61,6 +61,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       items: [
         { name: 'Achievements', path: '/dashboard/achievements', icon: Trophy, color: 'text-fuchsia-500 dark:text-fuchsia-400 bg-fuchsia-500/10 border border-fuchsia-500/20' },
         { name: 'Settings & Bio', path: '/dashboard/profile', icon: UserCircle, color: 'text-slate-500 dark:text-zinc-400 bg-slate-500/10 border border-slate-500/20' },
+        { name: 'Public Portfolio', path: '/dashboard/portfolio-settings', icon: Globe, color: 'text-cyan-500 dark:text-cyan-400 bg-cyan-500/10 border border-cyan-500/20' },
       ]
     }
   ];
@@ -72,14 +73,19 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
   return (
     <motion.aside
-      animate={{ width: isOpen ? 260 : 70 }}
+      animate={{
+        width: isMobile ? (isOpen ? 260 : 0) : (isOpen ? 260 : 70),
+        x: isMobile ? (isOpen ? 0 : -260) : 0,
+      }}
       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-      className={`relative z-20 flex flex-col h-screen border-r border-slate-200/60 dark:border-zinc-800/80 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl shrink-0 overflow-y-auto overflow-x-hidden`}
+      className={`${
+        isMobile ? 'fixed inset-y-0 left-0 z-40 shadow-2xl' : 'relative z-20'
+      } flex flex-col h-screen border-r border-slate-200/60 dark:border-zinc-800/80 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl shrink-0 overflow-y-auto overflow-x-hidden`}
     >
       {/* Brand Header */}
       <div className="flex h-16 items-center justify-between px-4 border-b border-slate-100 dark:border-zinc-900 shrink-0">
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-primary to-brand-cyberPink text-white shadow-md shadow-brand-primary/20 shrink-0 animate-pulse">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-primary to-brand-cyberPink text-white shadow-md shadow-brand-primary/20 shrink-0">
             <GraduationCap className="h-5 w-5" />
           </div>
           {isOpen && (
