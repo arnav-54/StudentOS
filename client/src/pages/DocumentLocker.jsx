@@ -1,26 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FolderLock, UploadCloud, FileText, Trash2, Eye, CheckCircle, X, Award } from 'lucide-react';
-import axios from 'axios';
+import { FolderLock, UploadCloud, FileText, Trash2, Eye, CheckCircle, X, Download, AlertCircle } from 'lucide-react';
+import api from '../services/api';
 const DocumentLocker = () => {
     const [documents, setDocuments] = useState([]);
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
     const [selectedType, setSelectedType] = useState('resume');
     const [successAlert, setSuccessAlert] = useState(false);
+    const [errorAlert, setErrorAlert] = useState('');
     const [previewDoc, setPreviewDoc] = useState(null);
     // Fetch documents on mount
     useEffect(() => {
         const fetchDocs = async () => {
             try {
-                const response = await axios.get('http://localhost:5001/api/documents');
+                const response = await api.get('/documents');
                 if (response.data && response.data.documents) {
                     const mapped = response.data.documents.map((doc) => ({
                         id: doc.id,
                         name: doc.name,
                         type: doc.type,
-                        size: '150 KB', // Default placeholder size
-                        uploadDate: new Date(doc.createdAt).toISOString().split('T')[0],
+                        size: doc.url && doc.url.startsWith('data:') 
+                          ? `${Math.round((doc.url.length * 0.75) / 1024)} KB` 
+                          : '150 KB',
+                        uploadDate: doc.createdAt ? new Date(doc.createdAt).toISOString().split('T')[0] : '2026-10-15',
                         url: doc.url || '#'
                     }));
                     setDocuments(mapped);
@@ -36,56 +39,68 @@ const DocumentLocker = () => {
         const file = e.target.files?.[0];
         if (!file)
             return;
+        if (file.size > 20 * 1024 * 1024) {
+            setErrorAlert('File is too large. Maximum size is 20MB.');
+            setTimeout(() => setErrorAlert(''), 4000);
+            e.target.value = '';
+            return;
+        }
         setUploading(true);
         setSuccessAlert(false);
-        setProgress(0);
+        setErrorAlert('');
+        setProgress(25);
         
-        let currentProgress = 0;
-        const interval = setInterval(() => {
-            currentProgress += 20;
-            setProgress(currentProgress);
-            
-            if (currentProgress >= 100) {
-                clearInterval(interval);
-                
-                // Convert file to Base64 Data URL to store real uploaded content in database
-                const fileReader = new FileReader();
-                fileReader.onload = async (event) => {
-                    const dataUrl = event.target.result;
-                    try {
-                        const response = await axios.post('http://localhost:5001/api/documents', {
-                            name: file.name,
-                            type: selectedType,
-                            url: dataUrl
-                        });
-                        if (response.data && response.data.document) {
-                            const doc = response.data.document;
-                            const newDoc = {
-                                id: doc.id,
-                                name: doc.name,
-                                type: doc.type,
-                                size: `${Math.round(file.size / 1024)} KB`,
-                                uploadDate: new Date(doc.createdAt).toISOString().split('T')[0],
-                                url: doc.url || '#'
-                            };
-                            setDocuments(prevDocs => [newDoc, ...prevDocs]);
-                        }
-                    }
-                    catch (err) {
-                        console.error('Failed to save document:', err);
-                    } finally {
-                        setUploading(false);
-                        setSuccessAlert(true);
-                        setTimeout(() => setSuccessAlert(false), 3000);
-                    }
-                };
-                fileReader.readAsDataURL(file);
+        const fileReader = new FileReader();
+        fileReader.onprogress = (progressEvent) => {
+            if (progressEvent.lengthComputable) {
+                const p = Math.round((progressEvent.loaded / progressEvent.total) * 70);
+                setProgress(25 + p);
             }
-        }, 150);
+        };
+        fileReader.onload = async (event) => {
+            const dataUrl = event.target.result;
+            setProgress(90);
+            try {
+                const response = await api.post('/documents', {
+                    name: file.name,
+                    type: selectedType,
+                    url: dataUrl
+                });
+                if (response.data && response.data.document) {
+                    const doc = response.data.document;
+                    const newDoc = {
+                        id: doc.id,
+                        name: doc.name,
+                        type: doc.type,
+                        size: `${Math.round(file.size / 1024)} KB`,
+                        uploadDate: new Date(doc.createdAt || Date.now()).toISOString().split('T')[0],
+                        url: doc.url || dataUrl
+                    };
+                    setDocuments(prevDocs => [newDoc, ...prevDocs]);
+                    setSuccessAlert(true);
+                    setTimeout(() => setSuccessAlert(false), 3500);
+                }
+            }
+            catch (err) {
+                console.error('Failed to save document:', err);
+                setErrorAlert(err.response?.data?.message || 'Upload failed. Please check file format.');
+                setTimeout(() => setErrorAlert(''), 4000);
+            } finally {
+                setProgress(100);
+                setUploading(false);
+                e.target.value = '';
+            }
+        };
+        fileReader.onerror = () => {
+            setErrorAlert('Error reading file. Please try again.');
+            setUploading(false);
+            e.target.value = '';
+        };
+        fileReader.readAsDataURL(file);
     };
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`http://localhost:5001/api/documents/${id}`);
+            await api.delete(`/documents/${id}`);
             setDocuments(documents.filter(doc => doc.id !== id));
         }
         catch (err) {
@@ -119,7 +134,12 @@ const DocumentLocker = () => {
 
       {successAlert && (<div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm">
           <CheckCircle className="h-4 w-4 shrink-0"/>
-          <span>Document successfully uploaded and encrypted.</span>
+          <span>Document successfully uploaded and saved to your secure locker.</span>
+        </div>)}
+
+      {errorAlert && (<div className="flex items-center gap-3 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-sm">
+          <AlertCircle className="h-4 w-4 shrink-0"/>
+          <span>{errorAlert}</span>
         </div>)}
 
       {/* Main Split Layout */}
@@ -229,6 +249,39 @@ const DocumentLocker = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto py-2">
+              {/* Real Uploaded PDF Viewer */}
+              {previewDoc.url && (previewDoc.url.startsWith('data:application/pdf') || previewDoc.name?.toLowerCase().endsWith('.pdf')) ? (
+                <div className="w-full h-[55vh] rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-zinc-900 flex flex-col">
+                  <iframe 
+                    src={previewDoc.url} 
+                    className="w-full h-full border-none" 
+                    title={previewDoc.name}
+                  />
+                </div>
+              ) : previewDoc.url && (previewDoc.url.startsWith('data:image/') || /\.(png|jpe?g|webp|gif)$/i.test(previewDoc.name || '')) ? (
+                /* Real Uploaded Image Viewer */
+                <div className="p-4 bg-slate-50 dark:bg-zinc-900 rounded-2xl flex items-center justify-center max-h-[55vh] overflow-hidden border border-slate-200 dark:border-zinc-800">
+                  <img 
+                    src={previewDoc.url} 
+                    alt={previewDoc.name} 
+                    className="max-h-[50vh] max-w-full object-contain rounded-lg shadow-sm"
+                  />
+                </div>
+              ) : previewDoc.url && previewDoc.url.startsWith('data:text/') ? (
+                /* Text file viewer */
+                <div className="bg-slate-50 dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 p-6 rounded-2xl border border-slate-200/50 dark:border-zinc-800/50 font-mono text-xs leading-relaxed whitespace-pre-wrap max-h-[50vh] overflow-y-auto">
+                  {(() => {
+                    try {
+                      const base64Content = previewDoc.url.split(',')[1];
+                      return decodeURIComponent(escape(atob(base64Content)));
+                    } catch {
+                      return 'Unable to display text preview.';
+                    }
+                  })()}
+                </div>
+              ) : (
+                /* Fallback type templates */
+                <>
               {/* Cover Letter Viewer */}
               {previewDoc.type === 'cover_letter' && (() => {
                 let text = "Dear Hiring Manager,\n\nPlease find attached my credentials for application. Having built StudentOS, a premium full-stack academic and professional dashboard system, I am excited to apply my skills.\n\nSincerely,\nArnav kumar";
@@ -407,6 +460,8 @@ const DocumentLocker = () => {
                   <h4 className="font-bold text-slate-900 dark:text-white">Secure Encrypted File Vault</h4>
                   <p className="text-[10px] text-slate-400 mt-1">Stored securely using 256-bit sandbox parameters.</p>
                 </div>
+              )}
+                </>
               )}
             </div>
 
