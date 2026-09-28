@@ -1,11 +1,19 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Clock, MapPin, X, ExternalLink, Trash2, } from 'lucide-react';
+const getRelativeDateStr = (dayOffset = 0) => {
+    const d = new Date();
+    d.setDate(d.getDate() + dayOffset);
+    const offset = d.getTimezoneOffset();
+    const local = new Date(d.getTime() - offset * 60 * 1000);
+    return local.toISOString().split('T')[0];
+};
+
 const defaultEvents = [
     {
         id: 'e1',
         title: 'CS 301 Midterm Exam',
-        date: '2026-06-28',
+        date: getRelativeDateStr(3),
         time: '10:00',
         category: 'academic',
         description: 'Covers Chapters 1-6: Advanced algorithms, complexity analysis, dynamic programming.',
@@ -14,7 +22,7 @@ const defaultEvents = [
     {
         id: 'e2',
         title: 'LeetCode Weekly Contest',
-        date: '2026-06-27',
+        date: getRelativeDateStr(1),
         time: '08:00',
         category: 'personal',
         description: 'Weekly algorithm competition to boost competitive programming ratings.',
@@ -23,7 +31,7 @@ const defaultEvents = [
     {
         id: 'e3',
         title: 'Linear Resume Review Session',
-        date: '2026-06-30',
+        date: getRelativeDateStr(5),
         time: '15:30',
         category: 'career',
         description: '1-on-1 mentorship session with Lead Designer from Linear.',
@@ -63,13 +71,14 @@ const categoryColors = {
 };
 const CalendarPage = () => {
     // Current Month/Year state
-    const [currentDate, setCurrentDate] = useState(new Date(2026, 5, 25)); // Set baseline in June 2026 to match mock data
-    const [selectedDate, setSelectedDate] = useState(new Date(2026, 5, 25));
+    const [currentDate, setCurrentDate] = useState(() => new Date());
+    const [selectedDate, setSelectedDate] = useState(() => new Date());
     const [events, setEvents] = useState(() => {
         const saved = localStorage.getItem('studentos_calendar_events');
         if (saved) {
             try {
-                return JSON.parse(saved);
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
             }
             catch {
                 // Fall back
@@ -195,7 +204,7 @@ const CalendarPage = () => {
         return allEvents.filter((e) => e.date === selectedDateStr);
     }, [allEvents, selectedDateStr]);
     const upcomingEvents = useMemo(() => {
-        const todayStr = '2026-06-25'; // Baseline
+        const todayStr = formatDateStr(new Date());
         return allEvents
             .filter((e) => e.date >= todayStr)
             .sort((a, b) => a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time || ''))
@@ -325,7 +334,11 @@ const CalendarPage = () => {
                 <button onClick={handlePrevMonth} className="p-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white hover:bg-slate-50 dark:bg-zinc-900/50 dark:hover:bg-zinc-900 text-slate-500 dark:text-zinc-400 cursor-pointer shadow-sm active:scale-95 transition-all">
                   <ChevronLeft className="h-4 w-4"/>
                 </button>
-                <button onClick={() => setCurrentDate(new Date(2026, 5, 25))} className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white hover:bg-slate-50 dark:bg-zinc-900/50 dark:hover:bg-zinc-900 text-xs font-bold text-slate-600 dark:text-zinc-300 cursor-pointer shadow-sm active:scale-95 transition-all">
+                <button onClick={() => {
+                  const now = new Date();
+                  setCurrentDate(now);
+                  setSelectedDate(now);
+                }} className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white hover:bg-slate-50 dark:bg-zinc-900/50 dark:hover:bg-zinc-900 text-xs font-bold text-slate-600 dark:text-zinc-300 cursor-pointer shadow-sm active:scale-95 transition-all">
                   Today
                 </button>
                 <button onClick={handleNextMonth} className="p-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white hover:bg-slate-50 dark:bg-zinc-900/50 dark:hover:bg-zinc-900 text-slate-500 dark:text-zinc-400 cursor-pointer shadow-sm active:scale-95 transition-all">
@@ -350,7 +363,7 @@ const CalendarPage = () => {
             const dStr = formatDateStr(date);
             const dayEvents = eventsByDate[dStr] || [];
             const isSelected = selectedDateStr === dStr;
-            const isToday = dStr === '2026-06-25'; // Mocked current date
+            const isToday = dStr === formatDateStr(new Date());
             return (<div key={dStr} onClick={() => handleDateClick(date)} className={`min-h-[90px] md:min-h-[110px] p-2 flex flex-col justify-between cursor-pointer transition-all ${isSelected
                     ? 'bg-brand-primary/5 dark:bg-brand-primary/10 ring-1 ring-inset ring-brand-primary/20'
                     : 'bg-white/75 dark:bg-[#0A0A0C]/75 hover:bg-slate-50/60 dark:hover:bg-zinc-900/20'}`}>
