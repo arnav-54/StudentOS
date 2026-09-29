@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { User, Code, Link2, Sparkles, CheckCircle, Plus, X } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 const popularSkills = [
     'Python', 'AWS', 'React', 'Node.js', 'Express', 'JavaScript', 'TypeScript',
     'MongoDB', 'SQL', 'MySQL', 'Prisma', 'PostgreSQL', 'Docker', 'Kubernetes',
@@ -26,13 +26,16 @@ const ProfilePage = () => {
     const [codeforcesUrl, setCodeforcesUrl] = useState('');
     const [aiGenerating, setAiGenerating] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [saveError, setSaveError] = useState('');
     // Fetch profile on mount
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const response = await axios.get('http://localhost:5001/api/profile');
+                const response = await api.get('/profile');
                 if (response.data) {
                     const p = response.data;
+                    if (p.name) setName(p.name);
+                    else if (user?.name) setName(user.name);
                     setSchool(p.school || '');
                     setDegree(p.degree || '');
                     setMajor(p.major || '');
@@ -50,7 +53,7 @@ const ProfilePage = () => {
             }
         };
         fetchProfile();
-    }, []);
+    }, [user?.name]);
     const handleAddSkill = (e) => {
         e.preventDefault();
         if (newSkill.trim() && !skills.includes(newSkill.trim())) {
@@ -74,32 +77,39 @@ const ProfilePage = () => {
     const handleGenerateBio = async () => {
         setAiGenerating(true);
         try {
-            const response = await axios.post('http://localhost:5001/api/profile/bio', {
-                name,
-                school,
-                degree,
-                major,
-                skills,
+            const response = await api.post('/profile/bio', {
+                name: name || user?.name || 'Student',
+                school: school || 'University',
+                degree: degree || 'Bachelor of Science',
+                major: major || 'Computer Science',
+                skills: skills.length > 0 ? skills : ['Software Engineering', 'Problem Solving'],
             });
             if (response.data && response.data.bio) {
                 setBio(response.data.bio);
             }
         }
         catch (err) {
-            console.warn('AI Bio endpoint failed, using mock generator fallback.');
-            setTimeout(() => {
-                const mockBio = `${name} is an honors student pursuing a ${degree} in ${major} at ${school}. Proficient in ${skills.slice(0, 4).join(', ')}, and ${skills[4] || 'software architecture'}, they combine strong academic foundations with practical software creation. Looking for challenging internship opportunities.`;
-                setBio(mockBio);
-            }, 1500);
+            console.warn('AI Bio endpoint failed, using intelligent generator fallback.');
+            const mockBio = `${name || 'Student'} is a dedicated scholar pursuing a ${degree || 'Degree'} in ${major || 'Computer Science'}${school ? ` at ${school}` : ''}. Proficient in ${skills.slice(0, 4).join(', ') || 'modern software development'}, they specialize in building scalable applications and practical solutions.`;
+            setBio(mockBio);
         }
         finally {
-            setTimeout(() => setAiGenerating(false), 1600);
+            setAiGenerating(false);
         }
     };
     const handleSave = async (e) => {
         e.preventDefault();
+        setSaveSuccess(false);
+        setSaveError('');
         try {
-            await axios.put('http://localhost:5001/api/profile', {
+            const cleanGh = githubUrl.trim().replace(/^https?:\/\/(www\.)?github\.com\//i, '').replace(/\/.*$/, '').replace(/^@/, '');
+            if (cleanGh) localStorage.setItem('studentos_gh_user', cleanGh);
+            
+            const cleanLc = leetcodeUrl.trim().replace(/^https?:\/\/(www\.)?leetcode\.com\/(u\/)?/i, '').replace(/\/.*$/, '');
+            if (cleanLc) localStorage.setItem('studentos_lc_user', cleanLc);
+
+            const res = await api.put('/profile', {
+                name: name.trim(),
                 school,
                 degree,
                 major,
@@ -112,11 +122,15 @@ const ProfilePage = () => {
                 codeforcesUrl
             });
             setSaveSuccess(true);
-            updateUser(name, user?.email || '');
-            setTimeout(() => setSaveSuccess(false), 3000);
+            if (updateUser) {
+                updateUser(name.trim(), user?.email || '');
+            }
+            setTimeout(() => setSaveSuccess(false), 3500);
         }
         catch (err) {
             console.error('Failed to save profile:', err);
+            setSaveError(err.response?.data?.message || 'Failed to save profile. Please try again.');
+            setTimeout(() => setSaveError(''), 4000);
         }
     };
     return (<div className="space-y-6">
@@ -131,6 +145,10 @@ const ProfilePage = () => {
       {saveSuccess && (<div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm">
           <CheckCircle className="h-4 w-4 shrink-0"/>
           <span>Profile changes updated successfully. All integration points synced.</span>
+        </div>)}
+
+      {saveError && (<div className="flex items-center gap-3 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-sm">
+          <span>{saveError}</span>
         </div>)}
 
       <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
