@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Plus, Search, Trash2, Clock, BookOpen, Hash, Bold, Italic, List, ListOrdered, Heading1, Heading2, Quote, Code, Save, Link2, CheckSquare, } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 const INITIAL_NOTES = [
     {
         id: '1',
@@ -67,7 +67,7 @@ const NotesPage = () => {
     useEffect(() => {
         const fetchNotes = async () => {
             try {
-                const response = await axios.get('http://localhost:5001/api/notes');
+                const response = await api.get('/notes');
                 if (response.data && response.data.notes) {
                     const mapped = response.data.notes.map((n) => ({
                         id: n.id,
@@ -94,7 +94,7 @@ const NotesPage = () => {
         n.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase())));
     const createNote = async () => {
         try {
-            const response = await axios.post('http://localhost:5001/api/notes', {
+            const response = await api.post('/notes', {
                 title: 'Untitled Note',
                 content: '## Start writing here...\n\nUse Markdown syntax for formatting.',
                 category: 'general'
@@ -133,7 +133,7 @@ const NotesPage = () => {
         const tagArray = editTags.split(',').map((t) => t.trim()).filter(Boolean);
         const category = tagArray[0] || 'general';
         try {
-            const response = await axios.put(`http://localhost:5001/api/notes/${selectedId}`, {
+            const response = await api.put(`/notes/${selectedId}`, {
                 title: editTitle || 'Untitled',
                 content: editContent,
                 category
@@ -158,7 +158,7 @@ const NotesPage = () => {
     };
     const deleteNote = async (id) => {
         try {
-            await axios.delete(`http://localhost:5001/api/notes/${id}`);
+            await api.delete(`/notes/${id}`);
             const updatedNotes = notes.filter((n) => n.id !== id);
             setNotes(updatedNotes);
             if (selectedId === id) {

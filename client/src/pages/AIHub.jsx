@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Cpu, Map, Award, MessageSquareCode, CheckCircle2, BookOpen, Send } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 const popularRoles = [
     'Software Developer',
     'Data Analyst',
@@ -39,7 +39,7 @@ const AIHub = () => {
     const handleGenerateRoadmap = async () => {
         setLoadingRoadmap(true);
         try {
-            const response = await axios.post('http://localhost:5001/api/ai/roadmap', { role: targetRole });
+            const response = await api.post('/ai/roadmap', { role: targetRole });
             if (response.data && response.data.roadmap) {
                 setRoadmapData(response.data.roadmap);
             }
@@ -102,7 +102,7 @@ const AIHub = () => {
     const handleSubmitInterview = async () => {
         setLoadingInterview(true);
         try {
-            const response = await axios.post('http://localhost:5001/api/ai/interview', {
+            const response = await api.post('/ai/interview', {
                 role: jobRole,
                 description: jobDesc,
                 answers: userAnswers

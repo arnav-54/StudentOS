@@ -11,7 +11,7 @@ import {
   Minimize2,
   Maximize2,
 } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 
 const quickPrompts = [
   "Help me write a cold email to a recruiter",
@@ -89,7 +89,7 @@ const AIChatAssistant = () => {
 
     // Try real API first, then fall back to smart mock
     try {
-      const response = await axios.post('http://localhost:5001/api/ai/chat', {
+      const response = await api.post('/ai/chat', {
         message: messageText,
       });
       if (response.data?.reply) {

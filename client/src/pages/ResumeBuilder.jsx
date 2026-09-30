@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FileText, Sparkles, Download, Plus, Trash2, CheckCircle, Briefcase, GraduationCap, FolderLock, Loader2, Award, UploadCloud } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import api from '../services/api';
 const ResumeBuilder = () => {
     const { user } = useAuth();
     // Resume state values
@@ -52,7 +52,7 @@ const ResumeBuilder = () => {
         if (pastedResumeText.includes('%PDF') || pastedResumeText.includes('PDF-') || pastedResumeText.includes('FlateDecode') || pastedResumeText.includes('obj')) {
             console.log("Raw binary PDF text detected. Loading student profile data for high-fidelity scanning...");
             try {
-                const profileRes = await axios.get('http://localhost:5001/api/profile');
+                const profileRes = await api.get('/profile');
                 if (profileRes.data) {
                     const p = profileRes.data;
                     const activeSkills = p.skills && p.skills.length > 0 ? p.skills.join(', ') : 'React, Node.js, Express, JavaScript, MongoDB, Python, Git';
@@ -81,7 +81,7 @@ Skills: React, Node.js, Express, MongoDB, Python, AWS, Docker, Git`;
         }
 
         try {
-            const res = await axios.post('http://localhost:5001/api/ai/resume-analyze', {
+            const res = await api.post('/ai/resume-analyze', {
                 resumeText: finalResumeText,
                 targetRole
             });
@@ -139,7 +139,7 @@ Skills: React, Node.js, Express, MongoDB, Python, AWS, Docker, Git`;
         setOptimizedAlert(false);
         const targetProject = projects[index];
         try {
-            const response = await axios.post('http://localhost:5001/api/ai/resume-optimize', {
+            const response = await api.post('/ai/resume-optimize', {
                 projectBullets: targetProject.bullets
             });
             if (response.data && response.data.optimized) {
@@ -177,7 +177,7 @@ Skills: React, Node.js, Express, MongoDB, Python, AWS, Docker, Git`;
         setLoadingAi(true);
         const targetExp = experience[index];
         try {
-            const response = await axios.post('http://localhost:5001/api/ai/resume-optimize', {
+            const response = await api.post('/ai/resume-optimize', {
                 projectBullets: targetExp.bullets
             });
             if (response.data && response.data.optimized) {
@@ -224,7 +224,7 @@ Skills: React, Node.js, Express, MongoDB, Python, AWS, Docker, Git`;
                 skillsText
             };
             const base64Str = btoa(unescape(encodeURIComponent(JSON.stringify(resumeData))));
-            await axios.post('http://localhost:5001/api/documents', {
+            await api.post('/documents', {
                 name: `Resume_${name.replace(/\s+/g, '_')}.json`,
                 type: 'resume',
                 url: `text:${base64Str}`

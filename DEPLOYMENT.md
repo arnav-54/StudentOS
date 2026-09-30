@@ -27,10 +27,10 @@
 
 5. **Environment Variables:**
    ```
-   DATABASE_URL=mongodb+srv://arnavaru62_db_user:Pass_word7@cluster0.2rlawbq.mongodb.net/studentos?retryWrites=true&w=majority
-   ACCESS_TOKEN_SECRET=studentos-jwt-access-token-secret-key-indigo-violet-2026
-   REFRESH_TOKEN_SECRET=studentos-jwt-refresh-token-secret-key-emerald-rose-2026
-   GEMINI_API_KEY=AIzaSyAQ4oAhsj8V3m4meT4JuGvq3Q91h-7JQgI
+   DATABASE_URL=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/studentos?retryWrites=true&w=majority
+   ACCESS_TOKEN_SECRET=your-secure-access-token-secret
+   REFRESH_TOKEN_SECRET=your-secure-refresh-token-secret
+   GEMINI_API_KEY=your-gemini-api-key
    PORT=5001
    NODE_ENV=production
    ```

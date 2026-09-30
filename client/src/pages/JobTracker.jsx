@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Briefcase, Plus, Trash2, MapPin, X } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 const JobTracker = () => {
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -9,7 +9,7 @@ const JobTracker = () => {
     useEffect(() => {
         const fetchApplications = async () => {
             try {
-                const response = await axios.get('http://localhost:5001/api/jobs');
+                const response = await api.get('/jobs');
                 if (response.data) {
                     const list = Array.isArray(response.data) ? response.data : (response.data.applications || []);
                     setApplications(list);
@@ -42,7 +42,7 @@ const JobTracker = () => {
         if (!company || !role)
             return;
         try {
-            const response = await axios.post('http://localhost:5001/api/jobs', {
+            const response = await api.post('/jobs', {
                 company,
                 role,
                 status,
@@ -66,7 +66,7 @@ const JobTracker = () => {
     };
     const handleMoveStatus = async (id, nextStatus) => {
         try {
-            await axios.put(`http://localhost:5001/api/jobs/${id}`, {
+            await api.put(`/jobs/${id}`, {
                 status: nextStatus
             });
             setApplications(applications.map(app => app.id === id ? { ...app, status: nextStatus } : app));
@@ -77,7 +77,7 @@ const JobTracker = () => {
     };
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`http://localhost:5001/api/jobs/${id}`);
+            await api.delete(`/jobs/${id}`);
             setApplications(applications.filter(app => app.id !== id));
         }
         catch (err) {

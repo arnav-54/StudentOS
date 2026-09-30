@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GitFork, Plus, Trash2, Calendar, Award, BookOpen, Briefcase, Code, Link2, Share2, CheckCircle, X } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 const TimelinePortfolio = () => {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -9,7 +9,7 @@ const TimelinePortfolio = () => {
     useEffect(() => {
         const fetchEvents = async () => {
             try {
-                const response = await axios.get('http://localhost:5001/api/timeline');
+                const response = await api.get('/timeline');
                 if (response.data && response.data.items) {
                     setEvents(response.data.items);
                 }
@@ -36,7 +36,7 @@ const TimelinePortfolio = () => {
         if (!title || !subtitle || !date)
             return;
         try {
-            const response = await axios.post('http://localhost:5001/api/timeline', {
+            const response = await api.post('/timeline', {
                 type,
                 title,
                 subtitle,
@@ -62,7 +62,7 @@ const TimelinePortfolio = () => {
     };
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`http://localhost:5001/api/timeline/${id}`);
+            await api.delete(`/timeline/${id}`);
             setEvents(events.filter(e => e.id !== id));
         }
         catch (err) {

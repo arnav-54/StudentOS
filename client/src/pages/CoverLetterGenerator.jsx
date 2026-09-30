@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FileText, Sparkles, Download, Copy, CheckCircle, RefreshCw, Building, Loader2, FolderLock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import api from '../services/api';
 const toneOptions = [
     { id: 'professional', label: 'Professional', desc: 'Formal and polished' },
     { id: 'conversational', label: 'Conversational', desc: 'Friendly and personable' },
@@ -76,7 +76,7 @@ const CoverLetterGenerator = () => {
         setIsGenerating(true);
         setGeneratedLetter('');
         try {
-            const response = await axios.post('http://localhost:5001/api/ai/cover-letter', {
+            const response = await api.post('/ai/cover-letter', {
                 company,
                 role,
                 jobDescription,
@@ -122,7 +122,7 @@ const CoverLetterGenerator = () => {
         try {
             // Base64 encode the generated letter to store locally in Document URL field
             const base64Str = btoa(unescape(encodeURIComponent(generatedLetter)));
-            await axios.post('http://localhost:5001/api/documents', {
+            await api.post('/documents', {
                 name: `Cover_Letter_${company.replace(/\s+/g, '_')}.txt`,
                 type: 'cover_letter',
                 url: `text:${base64Str}`

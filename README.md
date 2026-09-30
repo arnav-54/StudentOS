@@ -5,8 +5,8 @@
 A comprehensive full-stack web application designed to streamline the entire student journey — from academic tracking to career placement preparation.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)
-![React](https://img.shields.io/badge/React-61DAFB?logo=react&logoColor=black)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)
+![React](https://img.shields.io/badge/React_19-61DAFB?logo=react&logoColor=black)
 ![Node.js](https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=white)
 
@@ -43,11 +43,11 @@ A comprehensive full-stack web application designed to streamline the entire stu
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **React 18** with TypeScript
+- **React 19** with Modern JavaScript (ES Modules)
 - **Vite** for lightning-fast builds
-- **Tailwind CSS** for styling
-- **Framer Motion** for animations
-- **Axios** for API calls
+- **Tailwind CSS v4** for modern styling
+- **Framer Motion** for physics-based fluid animations
+- **Axios** with centralized API client
 
 ### Backend
 - **Node.js** with Express
