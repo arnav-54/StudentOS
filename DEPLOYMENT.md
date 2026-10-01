@@ -20,8 +20,8 @@
 3. **Connect GitHub repo** (push code to GitHub first)
 4. Settings:
    - **Root Directory:** `server`
-   - **Build Command:** `npm install && npx prisma generate && npm run build`
-   - **Start Command:** `node dist/index.js`
+   - **Build Command:** `npm install && npm run build`
+   - **Start Command:** `npm start` (or `node src/index.js`)
    - **Environment:** Node
    - **Plan:** Free
 

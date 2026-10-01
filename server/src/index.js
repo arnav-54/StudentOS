@@ -34,15 +34,14 @@ const allowedOrigins = [
 ];
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        }
-        else {
-            callback(null, true); // Allow all in production for now
-        }
+        // Allow all web origins (Vercel deployments, localhost, custom domains)
+        callback(null, true);
     },
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
 }));
+app.options('*', cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
@@ -59,19 +58,19 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 // Base healthcheck route
-app.get('/health', (req, res) => {
+app.get(['/health', '/api/health'], (req, res) => {
     res.json({ status: 'ok', time: new Date().toISOString() });
 });
-// Mount Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/profile', profileRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/jobs', jobsRoutes);
-app.use('/api/integrations', integrationsRoutes);
-app.use('/api/notes', notesRoutes);
-app.use('/api/public', publicRoutes);
-app.use('/api/timeline', timelineRoutes);
-app.use('/api/documents', documentsRoutes);
+// Mount Routes with dual aliases (supports both /api/auth and /auth)
+app.use(['/api/auth', '/auth'], authRoutes);
+app.use(['/api/profile', '/profile'], profileRoutes);
+app.use(['/api/ai', '/ai'], aiRoutes);
+app.use(['/api/jobs', '/jobs'], jobsRoutes);
+app.use(['/api/integrations', '/integrations'], integrationsRoutes);
+app.use(['/api/notes', '/notes'], notesRoutes);
+app.use(['/api/public', '/public'], publicRoutes);
+app.use(['/api/timeline', '/timeline'], timelineRoutes);
+app.use(['/api/documents', '/documents'], documentsRoutes);
 // Socket.io Handlers
 io.on('connection', (socket) => {
     console.log(`Socket connected: ${socket.id}`);

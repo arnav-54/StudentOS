@@ -3,7 +3,10 @@ import axios from 'axios';
 
 const AuthContext = createContext(undefined);
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_URL = rawApiUrl.replace(/\/+$/, '').endsWith('/api')
+  ? rawApiUrl.replace(/\/+$/, '')
+  : `${rawApiUrl.replace(/\/+$/, '')}/api`;
 
 // Automatically inject Authorization header if user token exists in localStorage
 axios.interceptors.request.use((config) => {
