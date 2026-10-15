@@ -24,12 +24,12 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
   ];
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 w-full items-center justify-between border-b border-slate-200/50 dark:border-zinc-900 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-md px-4 md:px-6">
+    <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-slate-200/50 dark:border-zinc-900 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-md px-4 md:px-6">
       {/* Left section: Toggle Menu */}
       <div className="flex items-center gap-4">
         <button
           onClick={toggleSidebar}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 dark:border-zinc-800 text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white bg-slate-50 dark:bg-zinc-900 transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 dark:border-zinc-800 text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white bg-slate-50 dark:bg-zinc-900 transition-colors cursor-pointer"
         >
           <Menu className="h-5 w-5" />
         </button>
@@ -70,7 +70,7 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
         </motion.button>
  
         {/* Notifications Dropdown */}
-        <div className="relative">
+        <div className="relative z-50">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -85,14 +85,14 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
             {showNotifications && (
               <>
                 {/* Backdrop Clicker */}
-                <div className="fixed inset-0 z-10" onClick={() => setShowNotifications(false)}></div>
+                <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)}></div>
                 
                 <motion.div
                   initial={{ opacity: 0, y: 12, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 12, scale: 0.95 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="absolute right-0 mt-3.5 z-20 w-80 rounded-2xl border border-slate-200/60 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl p-4 shadow-xl shadow-slate-200/50 dark:shadow-black/60 text-slate-900 dark:text-zinc-100"
+                  className="absolute right-0 mt-3.5 z-50 w-80 rounded-2xl border border-slate-200/60 dark:border-zinc-800 bg-white dark:bg-zinc-950 backdrop-blur-2xl p-4 shadow-2xl shadow-slate-300/60 dark:shadow-black/80 text-slate-900 dark:text-zinc-100"
                 >
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-zinc-900">
                     <span className="text-sm font-bold font-heading">Notifications</span>

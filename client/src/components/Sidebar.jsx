@@ -20,6 +20,7 @@ import {
   BookOpen,
   Globe
 } from 'lucide-react';
+import { StudentOSMark } from './StudentOSLogo';
 
 const Sidebar = ({ isOpen, setIsOpen, isMobile }) => {
   const { logout, user } = useAuth();
@@ -84,19 +85,19 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile }) => {
     >
       {/* Brand Header */}
       <div className="flex h-16 items-center justify-between px-4 border-b border-slate-100 dark:border-zinc-900 shrink-0">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-primary to-brand-cyberPink text-white shadow-md shadow-brand-primary/20 shrink-0">
-            <GraduationCap className="h-5 w-5" />
-          </div>
+        <div className="flex items-center gap-2.5 overflow-hidden">
+          <StudentOSMark size={34} />
           {isOpen && (
-            <motion.span
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className="text-lg font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-zinc-300 font-sans tracking-tight"
+            <motion.div
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.2 }}
+              className="flex items-center"
             >
-              StudentOS
-            </motion.span>
+              <span className="text-lg font-black tracking-tight text-slate-900 dark:text-white font-sans">
+                Student<span className="bg-gradient-to-r from-violet-600 to-indigo-500 bg-clip-text text-transparent">OS</span>
+              </span>
+            </motion.div>
           )}
         </div>
 
