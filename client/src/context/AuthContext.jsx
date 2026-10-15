@@ -131,6 +131,11 @@ export const AuthProvider = ({ children }) => {
   };
 
 
+  const setAuthSession = (userData) => {
+    setUser(userData);
+    localStorage.setItem('studentos_user', JSON.stringify(userData));
+  };
+
   const updateUser = (name, email) => {
     if (user) {
       const updated = { ...user, name, email };
@@ -140,7 +145,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, updateUser, setAuthSession }}>
       {children}
     </AuthContext.Provider>
   );
