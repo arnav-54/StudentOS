@@ -19,6 +19,7 @@ import {
   Target,
   Star
 } from 'lucide-react';
+import StudentOSLogo from '../components/StudentOSLogo';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -146,14 +147,7 @@ const LandingPage = () => {
       {/* Header */}
       <header className="sticky top-0 z-30 w-full bg-slate-50/90 dark:bg-[#030303]/90 backdrop-blur-xl border-b border-slate-200 dark:border-zinc-900/60 transition-all duration-300">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-violet-400 text-white shadow-md">
-              <GraduationCap className="h-5 w-5" />
-            </div>
-            <span className="text-xl font-black tracking-tight text-slate-900 dark:text-white font-heading">
-              Student<span className="text-violet-600 dark:text-violet-400">OS</span>
-            </span>
-          </div>
+          <StudentOSLogo size={36} onClick={() => navigate('/dashboard')} />
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600 dark:text-zinc-400">
             <a href="#features" className="hover:text-violet-600 dark:hover:text-white transition-colors">Features</a>
