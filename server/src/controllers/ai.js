@@ -88,3 +88,36 @@ export const analyzeResumeATS = async (req, res) => {
         return res.status(500).json({ message: 'Failed to analyze resume.' });
     }
 };
+
+export const generateResumeSummary = async (req, res) => {
+    try {
+        const summary = await AIService.generateSummary(req.body || {});
+        return res.json({ summary });
+    } catch (err) {
+        console.error('Resume summary error:', err);
+        return res.status(500).json({ message: 'Failed to generate resume summary.' });
+    }
+};
+
+export const analyzeSkillGapController = async (req, res) => {
+    const { targetRole, currentSkills } = req.body;
+    try {
+        const gap = await AIService.analyzeSkillGap(targetRole || 'Fullstack Developer', currentSkills || []);
+        return res.json({ gap });
+    } catch (err) {
+        console.error('Skill gap error:', err);
+        return res.status(500).json({ message: 'Failed to analyze skill gap.' });
+    }
+};
+
+export const generateMentorSprintController = async (req, res) => {
+    const { gpa, role, days } = req.body;
+    try {
+        const sprint = await AIService.generateMentorSprint(gpa, role, days);
+        return res.json({ sprint });
+    } catch (err) {
+        console.error('Mentor sprint error:', err);
+        return res.status(500).json({ message: 'Failed to generate sprint plan.' });
+    }
+};
+
