@@ -66,9 +66,16 @@ router.get('/reset', (req, res) => {
 });
 // Google OAuth
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-router.get('/google/callback', passport.authenticate('google', { failureRedirect: 'http://localhost:5173/auth?error=oauth_failed' }), (req, res) => {
-    // Successful login redirects back to dashboard
-    res.redirect('http://localhost:5173/dashboard');
+router.get('/google/callback', (req, res, next) => {
+    const clientUrl = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/+$/, '');
+    passport.authenticate('google', { failureRedirect: `${clientUrl}/auth?error=oauth_failed` })(req, res, () => {
+        if (!req.user) {
+            return res.redirect(`${clientUrl}/auth?error=oauth_failed`);
+        }
+        const token = generateAccessToken({ userId: req.user.id, email: req.user.email });
+        const redirectUrl = `${clientUrl}/auth?token=${encodeURIComponent(token)}&id=${encodeURIComponent(req.user.id)}&name=${encodeURIComponent(req.user.name || '')}&email=${encodeURIComponent(req.user.email || '')}`;
+        return res.redirect(redirectUrl);
+    });
 });
 // GitHub OAuth
 router.get('/github', passport.authenticate('github', { scope: ['user:email'] }));

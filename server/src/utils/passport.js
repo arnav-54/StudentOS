@@ -26,7 +26,7 @@ const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET || 'mock-google-secr
 passport.use(new GoogleStrategy({
     clientID: googleClientId,
     clientSecret: googleClientSecret,
-    callbackURL: 'http://localhost:5001/api/auth/google/callback',
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5001/api/auth/google/callback',
     passReqToCallback: true,
 }, async (req, accessToken, refreshToken, profile, done) => {
     try {
