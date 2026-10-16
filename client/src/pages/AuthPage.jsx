@@ -1,21 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Mail, User, ArrowRight, GraduationCap, AlertCircle, CheckCircle2, Code2, Briefcase, BarChart3 } from 'lucide-react';
+import { Lock, Mail, User, ArrowRight, GraduationCap, AlertCircle, CheckCircle2, Code2, Briefcase, BarChart3, Eye, EyeOff } from 'lucide-react';
 import { API_BASE_URL } from '../services/api';
+import StudentOSLogo from '../components/StudentOSLogo';
 
 const AuthPage = () => {
-    const { login, signup } = useAuth();
+    const { login, signup, user, setAuthSession } = useAuth();
     const navigate = useNavigate();
+
+    const goBack = () => {
+        // If already logged in → go to dashboard, else go to landing page
+        if (user) {
+            navigate('/dashboard');
+        } else {
+            navigate('/');
+        }
+    };
     const [isLogin, setIsLogin] = useState(true);
     const [showOtp, setShowOtp] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
     const [otpCode, setOtpCode] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // Handle OAuth redirect params
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+        const id = params.get('id');
+        const emailParam = params.get('email');
+        const nameParam = params.get('name');
+        const error = params.get('error');
+
+        if (error) {
+            setErrorMessage('Google sign-in was cancelled or encountered an issue. Please try again.');
+        } else if (token && id && emailParam) {
+            if (setAuthSession) {
+                setAuthSession({
+                    id,
+                    name: nameParam || 'Google User',
+                    email: emailParam,
+                    token
+                });
+            } else {
+                localStorage.setItem('studentos_user', JSON.stringify({
+                    id,
+                    name: nameParam || 'Google User',
+                    email: emailParam,
+                    token
+                }));
+            }
+            navigate('/dashboard', { replace: true });
+        }
+    }, [navigate, setAuthSession]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -63,11 +105,12 @@ const AuthPage = () => {
                 <div className="absolute bottom-1/4 right-1/4 h-60 w-60 rounded-full bg-indigo-600/8 blur-[100px] pointer-events-none" />
 
                 {/* Brand Header */}
-                <div className="flex items-center gap-3 relative z-10">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600 text-white">
-                        <GraduationCap className="h-6 w-6" />
-                    </div>
-                    <span className="text-xl font-extrabold tracking-tight font-heading">StudentOS</span>
+                <div className="relative z-10">
+                    <StudentOSLogo 
+                        size={38} 
+                        textClassName="text-white text-xl" 
+                        onClick={goBack}
+                    />
                 </div>
 
                 {/* Main Content */}
@@ -145,13 +188,22 @@ const AuthPage = () => {
             <div className="w-full lg:w-[55%] flex items-center justify-center p-6 sm:p-12 bg-white dark:bg-zinc-950">
 
                 <div className="w-full max-w-md space-y-8 relative z-10">
-                    <div className="text-center space-y-2">
+                    {/* Top navigation helper */}
+                    <div className="flex items-center justify-between pb-2">
                         {/* Mobile logo */}
-                        <div className="lg:hidden flex justify-center mb-5">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-600 text-white">
-                                <GraduationCap className="h-7 w-7" />
-                            </div>
+                        <div className="lg:hidden flex items-center">
+                            <StudentOSLogo size={32} onClick={goBack} />
                         </div>
+                        <button
+                            type="button"
+                            onClick={goBack}
+                            className="text-xs font-semibold text-slate-500 hover:text-violet-600 dark:text-zinc-400 dark:hover:text-violet-400 transition-colors ml-auto flex items-center gap-1.5 cursor-pointer"
+                        >
+                            <span>{user ? '← Back to Dashboard' : '← Back to Home'}</span>
+                        </button>
+                    </div>
+
+                    <div className="text-center space-y-2">
                         <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white font-heading">
                             {showOtp ? 'Verify your email' : isLogin ? 'Welcome back' : 'Create your account'}
                         </h2>
@@ -271,14 +323,32 @@ const AuthPage = () => {
                                     <div className="relative">
                                         <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
                                         <input
-                                            type="password"
+                                            type={showPassword ? 'text' : 'password'}
                                             required
+                                            minLength={8}
+                                            maxLength={128}
                                             placeholder="••••••••"
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
-                                            className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all font-medium text-sm"
+                                            className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all font-medium text-sm"
                                         />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 cursor-pointer transition-colors"
+                                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                        >
+                                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
                                     </div>
+                                    {!isLogin && (
+                                        <p className="text-[11px] text-slate-400 mt-1.5 flex items-center justify-between">
+                                            <span>Must be at least 8 characters</span>
+                                            <span className={password.length >= 8 ? 'text-emerald-500 font-semibold' : 'text-slate-400'}>
+                                                {password.length}/128
+                                            </span>
+                                        </p>
+                                    )}
                                 </div>
 
                                 <button
@@ -299,29 +369,19 @@ const AuthPage = () => {
                             <span className="bg-white dark:bg-zinc-950 px-3 text-slate-400 font-bold tracking-wider">Or continue with</span>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div>
                             <button
                                 type="button"
                                 onClick={() => { window.location.href = `${API_BASE_URL}/auth/google`; }}
-                                className="flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-sm font-bold rounded-xl text-slate-700 dark:text-zinc-300 hover:scale-[1.01] transition-all cursor-pointer"
+                                className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-sm font-semibold rounded-xl text-slate-700 dark:text-zinc-200 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer shadow-sm"
                             >
-                                <svg className="h-4 w-4" viewBox="0 0 24 24">
+                                <svg className="h-5 w-5" viewBox="0 0 24 24">
                                     <path fill="#EA4335" d="M12 5.04c1.62 0 3.08.56 4.22 1.64l3.15-3.15C17.45 1.68 14.9 1 12 1 7.35 1 3.4 3.65 1.57 7.5l3.74 2.9C6.2 7.14 8.87 5.04 12 5.04z" />
                                     <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.36H12v4.47h6.44c-.28 1.47-1.11 2.71-2.36 3.55l3.66 2.84c2.14-1.97 3.75-4.87 3.75-8.5z" />
                                     <path fill="#FBBC05" d="M5.31 14.6c-.24-.72-.38-1.5-.38-2.3s.14-1.58.38-2.3L1.57 7.1C.57 9.1 0 11.49 0 14s.57 4.9 1.57 6.9l3.74-2.9c-.24-.7-.38-1.48-.38-2.4z" />
                                     <path fill="#34A853" d="M12 23c3.24 0 5.97-1.08 7.96-2.92l-3.66-2.84c-1.02.68-2.32 1.09-4.3 1.09-3.13 0-5.8-2.1-6.75-5.36L1.51 15.9C3.34 19.75 7.29 23 12 23z" />
                                 </svg>
-                                Google
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => { window.location.href = `${API_BASE_URL}/auth/github`; }}
-                                className="flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-sm font-bold rounded-xl text-slate-700 dark:text-zinc-300 hover:scale-[1.01] transition-all cursor-pointer"
-                            >
-                                <svg className="h-4 w-4 fill-current text-slate-800 dark:text-zinc-200" viewBox="0 0 24 24">
-                                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                                </svg>
-                                GitHub
+                                Continue with Google
                             </button>
                         </div>
 
