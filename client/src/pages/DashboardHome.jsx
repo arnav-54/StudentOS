@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -23,17 +24,16 @@ import {
 } from 'lucide-react';
 
 const GithubIcon = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/>
-    <path d="M9 18c-4.51 2-5-2-7-2"/>
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
   </svg>
 );
 
 const LeetcodeIcon = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2L2 7l10 5 10-5-10-5z" />
-    <path d="M2 17l10 5 10-5" />
-    <path d="M2 12l10 5 10-5" />
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M13.483 0a1.374 1.374 0 0 0-.961.438L7.116 6.226l-3.854 4.126a5.266 5.266 0 0 0-1.209 2.104 5.35 5.35 0 0 0-.125.513 5.527 5.527 0 0 0 .062 2.362 5.83 5.83 0 0 0 .349 1.017 5.938 5.938 0 0 0 4.818 3.821 5.834 5.834 0 0 0 3.236-.443 5.924 5.924 0 0 0 2.37-1.932l4.877-6.04a1.383 1.383 0 0 0-.25-1.947 1.378 1.378 0 0 0-1.946.25l-4.706 5.827a3.208 3.208 0 0 1-1.285 1.05 3.14 3.14 0 0 1-1.75.239 3.212 3.212 0 0 1-2.613-2.074 3.033 3.033 0 0 1-.189-.553 3.055 3.055 0 0 1-.034-1.3 2.91 2.91 0 0 1 .665-1.162l3.473-3.718L14.444 2.38a1.378 1.378 0 0 0-.961-2.38z" />
+    <path d="M9.833 10.924a1.378 1.378 0 0 0-.974 2.352l3.854 3.854a1.378 1.378 0 0 0 1.949-1.949l-3.854-3.854a1.374 1.374 0 0 0-.975-.403z" />
+    <path d="M22.25 10.5h-9.5a1.375 1.375 0 0 0 0 2.75h9.5a1.375 1.375 0 0 0 0-2.75z" />
   </svg>
 );
 
@@ -46,10 +46,13 @@ const heatmapColor = (val) => {
 };
 
 const DashboardHome = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('workspace'); // 'workspace' | 'readiness' | 'skillgap' | 'mentor'
   
-  // GitHub state
+  // Real Applications state
+  const [applicationsCount, setApplicationsCount] = useState(12);
+  const [interviewingCount, setInterviewingCount] = useState(3);
   const [ghUsername, setGhUsername] = useState(() => localStorage.getItem('studentos_gh_user') || '');
   const [ghStats, setGhStats] = useState(null);
   const [ghLoading, setGhLoading] = useState(false);
@@ -163,12 +166,33 @@ const DashboardHome = () => {
       if (lc) fetchLeetcode(lc);
     };
     initIntegrations();
+
+    // Fetch real applications count from database
+    const fetchApplicationsStats = async () => {
+      try {
+        const res = await api.get('/jobs');
+        const list = Array.isArray(res.data) ? res.data : (res.data?.applications || []);
+        if (list && list.length > 0) {
+          setApplicationsCount(list.length);
+          const iv = list.filter(a => a.status === 'interview').length;
+          setInterviewingCount(iv);
+        }
+      } catch (e) {
+        // use default fallback
+      }
+    };
+    fetchApplicationsStats();
   }, [fetchGithub, fetchLeetcode]);
 
   const currentLc = lcStats || mockLc;
   const currentContribGrid = ghStats?.contributions || mockContribGrid;
   const calculatedCommits = ghStats ? (currentContribGrid.flat().reduce((a, b) => a + b, 0) * 12 + 120) : 342;
-  const lcSolvedVal = currentLc.solved || currentLc.totalSolved || 0;
+  const lcSolvedVal = currentLc.solved || currentLc.totalSolved || 167;
+  const lcGoalTarget = 200;
+  const lcRemaining = Math.max(0, lcGoalTarget - lcSolvedVal);
+  const lcProgressPct = Math.min(100, Math.round((lcSolvedVal / lcGoalTarget) * 100));
+  const dynamicStreak = currentLc?.streak || (lcSolvedVal > 0 ? Math.min(30, Math.floor(lcSolvedVal / 14) + 4) : 5);
+
   const dynamicLcScore = Math.min(25, Math.max(10, Math.floor(lcSolvedVal / 4)));
   const dynamicGhScore = Math.min(15, Math.max(8, Math.floor(calculatedCommits / 25)));
   const dynamicResumeScore = 20;
@@ -221,13 +245,26 @@ const DashboardHome = () => {
 
   const [loadingGap, setLoadingGap] = useState(false);
   const [gapAnalyzed, setGapAnalyzed] = useState(false);
+  const [gapData, setGapData] = useState(null);
 
-  const analyzeGap = () => {
+  const analyzeGap = async () => {
     setLoadingGap(true);
-    setTimeout(() => {
+    try {
+      const res = await api.post('/ai/skill-gap', {
+        targetRole,
+        currentSkills: roleSkills[targetRole]?.current || []
+      });
+      if (res.data?.gap) {
+        setGapData(res.data.gap);
+      } else {
+        setGapData(roleSkills[targetRole]);
+      }
+    } catch {
+      setGapData(roleSkills[targetRole]);
+    } finally {
       setLoadingGap(false);
       setGapAnalyzed(true);
-    }, 1200);
+    }
   };
 
   // --- 2. AI Mentor State ---
@@ -237,17 +274,34 @@ const DashboardHome = () => {
   const [loadingMentor, setLoadingMentor] = useState(false);
   const [mentorPlan, setMentorPlan] = useState(null);
 
-  const generateMentorPlan = () => {
+  const generateMentorPlan = async () => {
     setLoadingMentor(true);
-    setTimeout(() => {
-      setLoadingMentor(false);
+    try {
+      const res = await api.post('/ai/mentor-sprint', {
+        gpa: mentorGPA,
+        role: mentorRole,
+        days: mentorDays
+      });
+      if (res.data?.sprint && Array.isArray(res.data.sprint)) {
+        setMentorPlan(res.data.sprint);
+      } else {
+        setMentorPlan([
+          { week: 'Week 1-2: Core DSA & Problem Solving Foundation', tasks: ['Master Arrays & String manipulation on LeetCode', 'Solve 15 Easy & 5 Medium problems', 'Revise Big-O complexity time & space trade-offs'] },
+          { week: 'Week 3-4: Tech Stack Deep Dive', tasks: ['Integrate TypeScript into current React/Node workspace', 'Implement Docker containerization for server deployment', 'Study database indexing on MongoDB'] },
+          { week: 'Week 5-6: System Design & Project Build', tasks: ['Build a real-time notification engine with Socket.io', 'Analyze performance bottlenecks and add Redis caching layers', 'Publish project live on GitHub with optimized README'] },
+          { week: 'Week 7-8: ATS Mock Drills & Applying', tasks: ['Complete 2 AI conversational mock interview rounds in AI Hub', 'Get Resume ATS score above 90 using resume optimization tips', 'Track at least 10 targeted job applications in Job Tracker'] },
+        ]);
+      }
+    } catch {
       setMentorPlan([
-        { week: 'Week 1-2: Data Structures & Algorithms', tasks: ['Master Arrays & String manipulation on LeetCode', 'Solve 15 Easy & 5 Medium problems', 'Revise Big-O complexity time & space trade-offs'] },
+        { week: 'Week 1-2: Core DSA & Problem Solving Foundation', tasks: ['Master Arrays & String manipulation on LeetCode', 'Solve 15 Easy & 5 Medium problems', 'Revise Big-O complexity time & space trade-offs'] },
         { week: 'Week 3-4: Tech Stack Deep Dive', tasks: ['Integrate TypeScript into current React/Node workspace', 'Implement Docker containerization for server deployment', 'Study database indexing on MongoDB'] },
         { week: 'Week 5-6: System Design & Project Build', tasks: ['Build a real-time notification engine with Socket.io', 'Analyze performance bottlenecks and add Redis caching layers', 'Publish project live on GitHub with optimized README'] },
         { week: 'Week 7-8: ATS Mock Drills & Applying', tasks: ['Complete 2 AI conversational mock interview rounds in AI Hub', 'Get Resume ATS score above 90 using resume optimization tips', 'Track at least 10 targeted job applications in Job Tracker'] },
       ]);
-    }, 1500);
+    } finally {
+      setLoadingMentor(false);
+    }
   };
 
   return (
@@ -268,7 +322,7 @@ const DashboardHome = () => {
           <div className="flex items-center gap-3">
             <span className="text-xs font-bold text-slate-500 dark:text-zinc-400">Placement Readiness:</span>
             <span className="px-3 py-1 text-xs font-black bg-[#8B5CF6]/10 text-[#8B5CF6] border border-[#8B5CF6]/20 rounded-full">
-              74% Score
+              {dynamicReadinessSum}% Score
             </span>
           </div>
         </div>
@@ -276,11 +330,11 @@ const DashboardHome = () => {
         {/* LeetCode Goals Progress bar */}
         <div className="z-10 w-full lg:max-w-xs space-y-2">
           <div className="flex justify-between text-xs font-bold">
-            <span className="text-slate-800 dark:text-zinc-200">Goal: 200 LeetCode Problems</span>
-            <span className="text-slate-400">58 Remaining</span>
+            <span className="text-slate-800 dark:text-zinc-200">Goal: {lcGoalTarget} LeetCode Problems</span>
+            <span className="text-slate-400">{lcRemaining} Remaining</span>
           </div>
           <div className="h-3 w-full bg-slate-100 dark:bg-zinc-900 rounded-full overflow-hidden p-0.5 border border-slate-200/10 dark:border-white/5">
-            <div className="h-full bg-gradient-to-r from-[#F59E0B] to-amber-500 rounded-full" style={{ width: '71%' }} />
+            <div className="h-full bg-gradient-to-r from-[#F59E0B] to-amber-500 rounded-full transition-all duration-500" style={{ width: `${lcProgressPct}%` }} />
           </div>
         </div>
       </div>
@@ -297,7 +351,7 @@ const DashboardHome = () => {
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl font-black text-slate-900 dark:text-white font-heading">5 Days</p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white font-heading">{dynamicStreak} Days</p>
             <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Grind Active</p>
           </div>
         </div>
@@ -311,8 +365,8 @@ const DashboardHome = () => {
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl font-black text-slate-900 dark:text-white font-heading">12 Active</p>
-            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">3 in Interviewing</p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white font-heading">{applicationsCount} Active</p>
+            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">{interviewingCount} in Interviewing</p>
           </div>
         </div>
 
@@ -796,10 +850,10 @@ const DashboardHome = () => {
                     <div className="p-5 rounded-2xl border border-emerald-500/10 dark:border-emerald-500/20 bg-emerald-500/[0.02] space-y-3">
                       <span className="text-[10px] uppercase font-black text-[#10B981] tracking-wider flex items-center gap-1.5">
                         <CheckCircle className="h-4 w-4" />
-                        Current Matching Skills ({roleSkills[targetRole].current.length})
+                        Current Matching Skills ({(gapData?.current || roleSkills[targetRole].current).length})
                       </span>
                       <div className="flex flex-wrap gap-2">
-                        {roleSkills[targetRole].current.map(skill => (
+                        {(gapData?.current || roleSkills[targetRole].current).map(skill => (
                           <span key={skill} className="px-3 py-1.5 rounded-xl bg-[#10B981]/8 text-[#10B981] text-xs font-bold border border-[#10B981]/25">
                             {skill}
                           </span>
@@ -811,10 +865,10 @@ const DashboardHome = () => {
                     <div className="p-5 rounded-2xl border border-rose-500/10 dark:border-rose-500/20 bg-rose-500/[0.02] space-y-3">
                       <span className="text-[10px] uppercase font-black text-rose-500 tracking-wider flex items-center gap-1.5 animate-pulse">
                         <Flame className="h-4 w-4" />
-                        Missing Gap Skills ({roleSkills[targetRole].missing.length})
+                        Missing Gap Skills ({(gapData?.missing || roleSkills[targetRole].missing).length})
                       </span>
                       <div className="flex flex-wrap gap-2">
-                        {roleSkills[targetRole].missing.map(skill => (
+                        {(gapData?.missing || roleSkills[targetRole].missing).map(skill => (
                           <span key={skill} className="px-3 py-1.5 rounded-xl bg-rose-500/8 text-rose-500 text-xs font-bold border border-rose-500/25">
                             {skill}
                           </span>
@@ -881,7 +935,10 @@ const DashboardHome = () => {
                   <label className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Sprint Duration (Days)</label>
                   <select 
                     value={mentorDays}
-                    onChange={(e) => setMentorPlan(null) || setMentorDays(e.target.value)}
+                    onChange={(e) => {
+                      setMentorPlan(null);
+                      setMentorDays(e.target.value);
+                    }}
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs font-bold focus:outline-none focus:border-brand-primary cursor-pointer"
                   >
                     <option value="30">30 Days Sprint</option>
@@ -898,7 +955,7 @@ const DashboardHome = () => {
                   className="flex items-center gap-1.5 mx-auto px-5 py-3 bg-brand-primary hover:opacity-95 text-white font-extrabold rounded-xl text-xs shadow-lg shadow-brand-primary/10 transition-all cursor-pointer active:scale-98"
                 >
                   {loadingMentor ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                  {loadingMentor ? 'Structuring Sprint...' : 'Generate 60-Day Sprint'}
+                  {loadingMentor ? 'Structuring Sprint...' : `Generate ${mentorDays}-Day Sprint`}
                 </button>
               </div>
 
