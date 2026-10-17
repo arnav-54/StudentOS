@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileText, Sparkles, Download, Plus, Trash2, CheckCircle, Briefcase, GraduationCap, FolderLock, Loader2, Award, UploadCloud } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { extractTextFromPDF } from '../utils/pdfTextExtractor';
 const ResumeBuilder = () => {
     const { user } = useAuth();
     // Resume state values
@@ -9,6 +10,9 @@ const ResumeBuilder = () => {
     const [email, setEmail] = useState(user?.email || 'arnav.kumar@adypu.edu.in');
     const [phone, setPhone] = useState('+91 98765 43210');
     const [website, setWebsite] = useState(`https://github.com/${localStorage.getItem('studentos_gh_user') || 'arnav-54'}`);
+    const [summary, setSummary] = useState('Ambitious Computer Science student with proven hands-on competency in full-stack architecture, API optimization, and real-time platforms. Eager to leverage modern JavaScript frameworks and scalable systems design to deliver high-impact engineering solutions.');
+    const [generatingSummary, setGeneratingSummary] = useState(false);
+    const [mobileView, setMobileView] = useState('editor'); // 'editor' | 'preview'
     const [education, setEducation] = useState([
         { school: 'Newton School of Technology', degree: 'B.S. in Computer Science', date: 'Graduating 2028' }
     ]);
@@ -43,42 +47,131 @@ const ResumeBuilder = () => {
         'Mobile App Developer',
         'Solutions Architect'
     ];
+
+    // 1. Auto-load draft from localStorage or Vault on mount
+    useEffect(() => {
+        const savedDraft = localStorage.getItem('studentos_resume_draft');
+        if (savedDraft) {
+            try {
+                const p = JSON.parse(savedDraft);
+                if (p.name) setName(p.name);
+                if (p.email) setEmail(p.email);
+                if (p.phone) setPhone(p.phone);
+                if (p.website) setWebsite(p.website);
+                if (p.summary) setSummary(p.summary);
+                if (Array.isArray(p.education) && p.education.length > 0) setEducation(p.education);
+                if (Array.isArray(p.projects) && p.projects.length > 0) setProjects(p.projects);
+                if (Array.isArray(p.experience) && p.experience.length > 0) setExperience(p.experience);
+                if (Array.isArray(p.certifications) && p.certifications.length > 0) setCertifications(p.certifications);
+                if (p.skillsText) setSkillsText(p.skillsText);
+                return;
+            } catch (e) {
+                console.error('Error parsing local resume draft:', e);
+            }
+        }
+        // If not in localStorage, try loading from Document Locker
+        const loadFromVault = async () => {
+            try {
+                const res = await api.get('/documents');
+                const docs = Array.isArray(res.data) ? res.data : (res.data?.documents || []);
+                const resumeDoc = docs.find(d => d.type === 'resume' && d.url?.startsWith('text:'));
+                if (resumeDoc) {
+                    const b64 = resumeDoc.url.replace(/^text:/, '');
+                    const jsonStr = decodeURIComponent(escape(atob(b64)));
+                    const p = JSON.parse(jsonStr);
+                    if (p.name) setName(p.name);
+                    if (p.email) setEmail(p.email);
+                    if (p.phone) setPhone(p.phone);
+                    if (p.website) setWebsite(p.website);
+                    if (p.summary) setSummary(p.summary);
+                    if (Array.isArray(p.education) && p.education.length > 0) setEducation(p.education);
+                    if (Array.isArray(p.projects) && p.projects.length > 0) setProjects(p.projects);
+                    if (Array.isArray(p.experience) && p.experience.length > 0) setExperience(p.experience);
+                    if (Array.isArray(p.certifications) && p.certifications.length > 0) setCertifications(p.certifications);
+                    if (p.skillsText) setSkillsText(p.skillsText);
+                }
+            } catch (err) {
+                console.warn('No saved vault resume found', err.message);
+            }
+        };
+        loadFromVault();
+    }, []);
+
+    // 2. Auto-save draft on every change
+    useEffect(() => {
+        const draft = {
+            name,
+            email,
+            phone,
+            website,
+            summary,
+            education,
+            projects,
+            experience,
+            certifications,
+            skillsText
+        };
+        localStorage.setItem('studentos_resume_draft', JSON.stringify(draft));
+    }, [name, email, phone, website, summary, education, projects, experience, certifications, skillsText]);
+
+    const handleGenerateSummary = async () => {
+        setGeneratingSummary(true);
+        try {
+            const res = await api.post('/ai/resume-summary', {
+                name,
+                degree: education[0]?.degree || 'B.S. in Computer Science',
+                major: 'Computer Science',
+                targetRole,
+                skills: skillsText
+            });
+            if (res.data?.summary) {
+                setSummary(res.data.summary);
+            }
+        } catch (err) {
+            console.error('Failed to generate summary:', err);
+            setSummary(`Results-driven ${targetRole} and Computer Science student proficient in ${skillsText.split('\n')[0]?.replace('Languages: ', '') || 'modern web technologies'}. Experienced in building scalable full-stack applications with clean architecture and proven problem-solving abilities.`);
+        } finally {
+            setGeneratingSummary(false);
+        }
+    };
+    const handleLoadCurrentResume = () => {
+        const eduStr = education.map(e => `${e.school || ''} - ${e.degree || ''} (${e.date || ''})`).filter(Boolean).join('\n');
+        const projStr = projects.map(p => `${p.name || ''} [${p.role || 'Developer'}]\n${p.bullets || ''}`).filter(Boolean).join('\n\n');
+        const expStr = experience.map(exp => `${exp.company || ''} - ${exp.role || ''} (${exp.date || ''})\n${exp.bullets || ''}`).filter(Boolean).join('\n\n');
+        const certStr = certifications.map(c => `${c.title || ''} (${c.date || ''})`).filter(Boolean).join('\n');
+
+        const formatted = `CANDIDATE: ${name}
+EMAIL: ${email}
+PHONE: ${phone}
+PORTFOLIO/GITHUB: ${website}
+TARGET ROLE: ${targetRole}
+
+PROFESSIONAL SUMMARY:
+${summary}
+
+EDUCATION:
+${eduStr}
+
+PROJECTS & ACHIEVEMENTS:
+${projStr}
+
+WORK EXPERIENCE:
+${expStr}
+
+TECHNICAL SKILLS:
+${skillsText}
+
+CERTIFICATIONS:
+${certStr}`;
+
+        setPastedResumeText(formatted);
+        setUploadedFileName('Current_Form_Data.txt');
+    };
+
     const handleAnalyzeResume = async () => {
         if (!pastedResumeText.trim()) return;
         setAnalyzing(true);
-        let finalResumeText = pastedResumeText;
-        
-        // If raw compressed binary PDF layout markers are detected in text stream
-        if (pastedResumeText.includes('%PDF') || pastedResumeText.includes('PDF-') || pastedResumeText.includes('FlateDecode') || pastedResumeText.includes('obj')) {
-            console.log("Raw binary PDF text detected. Loading student profile data for high-fidelity scanning...");
-            try {
-                const profileRes = await api.get('/profile');
-                if (profileRes.data) {
-                    const p = profileRes.data;
-                    const activeSkills = p.skills && p.skills.length > 0 ? p.skills.join(', ') : 'React, Node.js, Express, JavaScript, MongoDB, Python, Git';
-                    
-                    finalResumeText = `Candidate Name: ${name}
-School/University: ${p.school || 'Newton School of Technology'}
-Degree Program: ${p.degree || 'B.S. in Computer Science'}
-Major: ${p.major || 'AIML'}
-Target Career Role: ${targetRole}
-Skills & Tech Stack: ${activeSkills}
-Professional Biography: ${p.bio || 'Honors student pursuing computer science, building fullstack platforms, with deep interest in software engineering and cloud deployment.'}
-GitHub Repository: https://github.com/${localStorage.getItem('studentos_gh_user') || 'arnav-54'}
-LeetCode Profile: https://leetcode.com/${localStorage.getItem('studentos_lc_user') || 'arnav_ku26'}`;
-                    
-                    // Update text block so user can view the parsed text in the form
-                    setPastedResumeText(finalResumeText);
-                }
-            } catch (profileErr) {
-                console.warn("Failed to fetch profile settings, applying clean text fallback...");
-                finalResumeText = `Candidate Name: ${name}
-Newton School of Technology
-Target Role: ${targetRole}
-Skills: React, Node.js, Express, MongoDB, Python, AWS, Docker, Git`;
-                setPastedResumeText(finalResumeText);
-            }
-        }
+        const finalResumeText = pastedResumeText.trim();
 
         try {
             const res = await api.post('/ai/resume-analyze', {
@@ -217,6 +310,7 @@ Skills: React, Node.js, Express, MongoDB, Python, AWS, Docker, Git`;
                 email,
                 phone,
                 website,
+                summary,
                 education,
                 projects,
                 experience,
@@ -229,6 +323,7 @@ Skills: React, Node.js, Express, MongoDB, Python, AWS, Docker, Git`;
                 type: 'resume',
                 url: `text:${base64Str}`
             });
+            localStorage.setItem('studentos_resume_draft', JSON.stringify(resumeData));
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 2500);
         } catch (err) {
@@ -304,13 +399,41 @@ Skills: React, Node.js, Express, MongoDB, Python, AWS, Docker, Git`;
         </button>
       </div>
 
+      {/* Mobile Switcher (Only visible on small/medium screens) */}
+      {activeTab === 'build' && (
+        <div className="flex lg:hidden bg-slate-100 dark:bg-zinc-900/80 p-1 rounded-xl print:hidden shadow-inner">
+          <button
+            type="button"
+            onClick={() => setMobileView('editor')}
+            className={`flex-1 py-2 text-xs font-extrabold rounded-lg transition-all ${
+              mobileView === 'editor'
+                ? 'bg-white dark:bg-zinc-800 text-brand-primary dark:text-emerald-400 shadow-sm'
+                : 'text-slate-500 dark:text-zinc-400'
+            }`}
+          >
+            📝 Resume Editor
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileView('preview')}
+            className={`flex-1 py-2 text-xs font-extrabold rounded-lg transition-all ${
+              mobileView === 'preview'
+                ? 'bg-white dark:bg-zinc-800 text-brand-primary dark:text-emerald-400 shadow-sm'
+                : 'text-slate-500 dark:text-zinc-400'
+            }`}
+          >
+            👁️ Live Preview
+          </button>
+        </div>
+      )}
+
       {/* Main Split Pane */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start print:block print:w-full">
         
         {activeTab === 'build' ? (
           <>
             {/* LEFT COLUMN: Input form editor */}
-            <div className="space-y-6 print:hidden">
+            <div className={`space-y-6 print:hidden ${mobileView === 'preview' ? 'hidden lg:block' : 'block'}`}>
           {/* Personal Information */}
           <div className="p-6 rounded-2xl border border-slate-200/60 dark:border-zinc-800/60 bg-white/75 dark:bg-[#0A0A0C]/75 backdrop-blur-xl shadow-sm hover:border-slate-300 dark:hover:border-zinc-700/80 transition-all duration-300 space-y-4">
             <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-200">Contact Details</h3>
@@ -332,6 +455,32 @@ Skills: React, Node.js, Express, MongoDB, Python, AWS, Docker, Git`;
                 <input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/40 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none"/>
               </div>
             </div>
+          </div>
+
+          {/* Professional Summary Form */}
+          <div className="p-6 rounded-2xl border border-slate-200/60 dark:border-zinc-800/60 bg-white/75 dark:bg-[#0A0A0C]/75 backdrop-blur-xl shadow-sm hover:border-slate-300 dark:hover:border-zinc-700/80 transition-all duration-300 space-y-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-200">Professional Summary</h3>
+                <p className="text-[10px] text-slate-400">Brief, high-impact 2-3 line ATS summary for recruiters.</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleGenerateSummary}
+                disabled={generatingSummary}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-primary/10 hover:bg-brand-primary/20 text-brand-primary dark:text-emerald-400 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
+              >
+                {generatingSummary ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                {generatingSummary ? 'Writing...' : 'AI Generate'}
+              </button>
+            </div>
+            <textarea
+              rows={3}
+              value={summary}
+              onChange={(e) => setSummary(e.target.value)}
+              placeholder="e.g. Ambitious Computer Science student specializing in full-stack web engineering..."
+              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/40 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none resize-none leading-relaxed"
+            />
           </div>
 
           {/* Education Form */}
@@ -482,7 +631,7 @@ Skills: React, Node.js, Express, MongoDB, Python, AWS, Docker, Git`;
         </div>
 
         {/* RIGHT COLUMN: Print-friendly Live preview */}
-        <div className="p-6 sm:p-8 rounded-2xl border border-slate-200/60 dark:border-zinc-800/60 bg-white/75 dark:bg-[#0A0A0C]/75 backdrop-blur-xl shadow-sm flex flex-col justify-start min-h-[600px] text-zinc-900 dark:text-zinc-100 print:border-0 print:shadow-none print:p-0 print:m-0 print:w-full print:bg-white print:text-black">
+        <div className={`p-6 sm:p-8 rounded-2xl border border-slate-200/60 dark:border-zinc-800/60 bg-white dark:bg-[#0A0A0C]/75 backdrop-blur-xl shadow-sm flex flex-col justify-start min-h-[600px] text-zinc-900 dark:text-zinc-100 print-resume-sheet print:!block print:!visible print:!w-full print:!m-0 print:!p-0 print:!border-0 print:!shadow-none print:!bg-white print:!text-black ${mobileView === 'editor' ? 'hidden lg:block' : 'block'}`}>
           {/* Header section */}
           <div className="text-center space-y-1.5 border-b border-zinc-200 dark:border-zinc-800 pb-4">
             <h2 className="text-xl font-bold tracking-tight">{name || 'Alex Mercer'}</h2>
@@ -494,6 +643,19 @@ Skills: React, Node.js, Express, MongoDB, Python, AWS, Docker, Git`;
               <span className="hover:underline">{website}</span>
             </div>
           </div>
+
+          {/* Professional Summary in Preview */}
+          {summary && (
+            <div className="mt-4 space-y-1.5 text-left">
+              <div className="flex items-center gap-1.5 border-b border-zinc-200 dark:border-zinc-800 pb-1">
+                <FileText className="h-4 w-4 text-zinc-500"/>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">Professional Summary</h3>
+              </div>
+              <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-normal pl-3 border-l-2 border-zinc-200 dark:border-zinc-800 font-sans">
+                {summary}
+              </p>
+            </div>
+          )}
 
           {/* Education list */}
           <div className="mt-4 space-y-3">
@@ -637,42 +799,29 @@ Skills: React, Node.js, Express, MongoDB, Python, AWS, Docker, Git`;
                 <input 
                   type="file" 
                   accept=".pdf,.txt"
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const file = e.target.files[0];
                     if (!file) return;
                     setUploadedFileName(file.name);
-                    const reader = new FileReader();
+                    
                     if (file.name.endsWith('.txt')) {
+                      const reader = new FileReader();
                       reader.onload = (event) => {
-                        setPastedResumeText(event.target.result);
+                        setPastedResumeText(event.target.result || '');
                       };
                       reader.readAsText(file);
-                    } else {
-                      // PDF/Binary reader extraction simulation
-                      reader.onload = (event) => {
-                        const buffer = event.target.result;
-                        const uint8 = new Uint8Array(buffer);
-                        let rawText = "";
-                        for (let i = 0; i < Math.min(uint8.length, 30000); i++) {
-                          const char = uint8[i];
-                          if ((char >= 32 && char <= 126) || char === 10 || char === 13) {
-                            rawText += String.fromCharCode(char);
-                          } else {
-                            rawText += " ";
-                          }
-                        }
-                        let cleanedText = rawText
-                          .replace(/\s+/g, ' ')
-                          .replace(/[^a-zA-Z0-9.,\-:;()@ ]/g, '')
-                          .trim();
-                        if (cleanedText.length > 100) {
-                          setPastedResumeText(cleanedText.substring(0, 5000));
+                    } else if (file.name.endsWith('.pdf')) {
+                      try {
+                        const extracted = await extractTextFromPDF(file);
+                        if (extracted && extracted.trim().length > 20) {
+                          setPastedResumeText(extracted);
                         } else {
-                          // Real user profile fallback if PDF raw binary matches no parenthesis text
-                          setPastedResumeText(`Arnav kumar\nNewton School of Technology\narnav-54\narnav_ku26\nSkills: React, Node.js, Python, Express, AWS, Docker, MongoDB\nTarget Role: ${targetRole}`);
+                          setPastedResumeText('Notice: Could not parse text from this PDF. Please copy and paste the resume text directly below.');
                         }
-                      };
-                      reader.readAsArrayBuffer(file);
+                      } catch (err) {
+                        console.error('Error extracting PDF text:', err);
+                        setPastedResumeText('Notice: This PDF may be an image-only scan. Please paste your text directly into the box below.');
+                      }
                     }
                   }}
                   className="absolute inset-0 opacity-0 cursor-pointer" 
@@ -681,18 +830,43 @@ Skills: React, Node.js, Express, MongoDB, Python, AWS, Docker, Git`;
                 <p className="text-[10px] font-bold text-slate-700 dark:text-zinc-300">
                   {uploadedFileName ? `Selected: ${uploadedFileName}` : 'Drag & Drop PDF/TXT or Click to upload'}
                 </p>
-                <p className="text-[8px] text-slate-400 mt-0.5">Maximum size 5MB (.pdf, .txt)</p>
+                <p className="text-[8px] text-slate-400 mt-0.5">Accepts any candidate resume (.pdf, .txt) up to 5MB</p>
               </div>
             </div>
 
             <div>
-              <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Verify Parsed Text Content</label>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Verify Parsed Text Content</label>
+                <div className="flex items-center gap-3">
+                  {pastedResumeText && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPastedResumeText('');
+                        setUploadedFileName('');
+                        setAnalysisResult(null);
+                      }}
+                      className="text-[10px] text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  )}
+                  <button 
+                    type="button" 
+                    onClick={handleLoadCurrentResume}
+                    className="text-[10px] font-extrabold text-[#8B5CF6] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <FileText className="h-3 w-3" />
+                    Load My Builder Resume
+                  </button>
+                </div>
+              </div>
               <textarea 
                 rows={12} 
                 value={pastedResumeText} 
                 onChange={(e) => setPastedResumeText(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/40 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none font-sans"
-                placeholder="Parsed text content will appear here automatically after upload. You can review or manually edit this text before scanning."
+                placeholder="Upload any candidate's resume (PDF/TXT) above or paste any resume text directly here to test its ATS score against the Target Role."
               />
             </div>
 
