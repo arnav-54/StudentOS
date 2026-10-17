@@ -1,61 +1,151 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { Globe, Copy, Check, ExternalLink, Share2, Eye, Shield, Link2, ToggleLeft, ToggleRight, Briefcase, GraduationCap, Code2, MapPin, Award, Star, } from 'lucide-react';
+import api from '../services/api';
+import {
+  Globe,
+  Copy,
+  Check,
+  ExternalLink,
+  Share2,
+  Eye,
+  Shield,
+  Link2,
+  ToggleLeft,
+  ToggleRight,
+  Briefcase,
+  GraduationCap,
+  Code2,
+  MapPin,
+  Award,
+  Star,
+} from 'lucide-react';
+
 const PublicPortfolioSettings = () => {
-    const { user } = useAuth();
-    const [isPublic, setIsPublic] = useState(() => {
-        try {
-            const stored = localStorage.getItem('studentos_public');
-            return stored ? JSON.parse(stored) : false;
+  const { user } = useAuth();
+  const [isPublic, setIsPublic] = useState(() => {
+    try {
+      const stored = localStorage.getItem('studentos_public');
+      return stored ? JSON.parse(stored) : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const [slug, setSlug] = useState(() => {
+    try {
+      return localStorage.getItem('studentos_slug') || user?.name?.toLowerCase().replace(/\s+/g, '-') || 'arnav-kumar';
+    } catch {
+      return 'arnav-kumar';
+    }
+  });
+
+  const [copied, setCopied] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: user?.name || 'Arnav Kumar',
+    email: user?.email || 'arnav@example.com',
+    title: 'Full-Stack Developer & CS Student',
+    location: 'Bengaluru / Delhi NCR, India',
+    university: 'Newton School of Technology — B.S. CS & AI',
+    bio: 'Passionate about building scalable full-stack applications and AI workflows. Actively grinding DSA on LeetCode and preparing for top-tier software engineering roles.',
+    skills: ['React', 'TypeScript', 'Node.js', 'Python', 'Tailwind CSS', 'PostgreSQL', 'Express', 'Git'],
+    stats: { repos: 24, leetcode: 167, streak: 15, projects: 6 },
+    timeline: [
+      { date: 'Jan 2026', title: 'Newton School of Technology', desc: 'Junior Teaching Assistant for Web Dev and Data Structures', type: 'work' },
+      { date: 'Dec 2025', title: 'StudentOS Academic Platform', desc: 'Engineered student career command center with AI resume parsing & roadmap generation', type: 'project' },
+      { date: 'Nov 2025', title: 'AWS Certified Cloud Practitioner', desc: 'Validated core AWS architecture, security, and IAM best practices', type: 'cert' },
+      { date: 'Sep 2025', title: 'National Hackathon Finalist', desc: 'Top 10 finalist out of 500+ teams with automated AI study assistant', type: 'award' },
+    ],
+  });
+
+  useEffect(() => {
+    // Fetch live profile details if available
+    const loadRealData = async () => {
+      try {
+        const [profileRes, statsRes] = await Promise.allSettled([
+          api.get('/profile'),
+          api.get('/analytics/dashboard')
+        ]);
+
+        let updated = {};
+        if (profileRes.status === 'fulfilled' && profileRes.value.data) {
+          const p = profileRes.value.data;
+          updated.name = p.name || p.user?.name || user?.name || 'Arnav Kumar';
+          updated.email = p.email || p.user?.email || user?.email || 'arnav@example.com';
+          if (p.headline || p.targetRole) updated.title = p.headline || p.targetRole;
+          if (p.bio) updated.bio = p.bio;
+          if (p.university || p.college) updated.university = `${p.university || p.college} — ${p.degree || 'B.Tech / B.S. CSE'}`;
+          if (p.location) updated.location = p.location;
+          if (p.skills && Array.isArray(p.skills) && p.skills.length > 0) updated.skills = p.skills;
         }
-        catch {
-            return false;
+
+        if (statsRes.status === 'fulfilled' && statsRes.value.data) {
+          const s = statsRes.value.data;
+          updated.stats = {
+            repos: s.githubRepos || s.repos || 24,
+            leetcode: s.leetcodeSolved || 167,
+            streak: s.currentStreak || 15,
+            projects: s.activeProjects || 6,
+          };
         }
-    });
-    const [slug, setSlug] = useState(() => {
-        try {
-            return localStorage.getItem('studentos_slug') || user?.name?.toLowerCase().replace(/\s+/g, '-') || 'student';
-        }
-        catch {
-            return 'student';
-        }
-    });
-    const [copied, setCopied] = useState(false);
-    const [showPreview, setShowPreview] = useState(false);
-    const publicUrl = `https://studentos.app/u/${slug}`;
-    useEffect(() => {
-        localStorage.setItem('studentos_public', JSON.stringify(isPublic));
-        localStorage.setItem('studentos_slug', slug);
-    }, [isPublic, slug]);
-    const copyLink = () => {
-        navigator.clipboard.writeText(publicUrl);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+
+        setProfileData(prev => ({ ...prev, ...updated }));
+      } catch (e) {
+        // Fallback cleanly
+      }
     };
-    // Mock portfolio data for preview
-    const profileData = {
-        name: user?.name || 'Arnav Kumar',
-        email: user?.email || 'arnav@example.com',
-        title: 'Full-Stack Developer & CS Student',
-        location: 'Delhi NCR, India',
-        university: 'GGSIPU — B.Tech CSE',
-        bio: 'Passionate about building scalable web applications. Currently learning system design and solving LeetCode to crack product-based companies.',
-        skills: ['React', 'TypeScript', 'Node.js', 'Python', 'AWS', 'Docker', 'PostgreSQL', 'Tailwind CSS'],
-        stats: { repos: 24, leetcode: 142, streak: 12, projects: 8 },
-        timeline: [
-            { date: 'Jun 2026', title: 'StudentOS Dashboard', desc: 'Built a full-stack student career management tool with AI integrations', type: 'project' },
-            { date: 'May 2026', title: 'AWS Cloud Practitioner', desc: 'Passed the certification exam with a score of 860/1000', type: 'cert' },
-            { date: 'Apr 2026', title: 'Vercel Frontend Intern', desc: 'Built reusable component library used by 3 product teams', type: 'work' },
-            { date: 'Mar 2026', title: 'SIH 2025 Finalist', desc: 'Reached national finals with an AI-powered healthcare solution', type: 'award' },
-        ],
-    };
-    const typeIcons = {
-        project: <Code2 className="h-4 w-4 text-brand-primary"/>,
-        cert: <Award className="h-4 w-4 text-brand-warning"/>,
-        work: <Briefcase className="h-4 w-4 text-brand-success"/>,
-        award: <Star className="h-4 w-4 text-brand-accent"/>,
-    };
+
+    loadRealData();
+  }, [user]);
+
+  const publicUrl = `https://studentos.app/u/${slug}`;
+
+  useEffect(() => {
+    localStorage.setItem('studentos_public', JSON.stringify(isPublic));
+    localStorage.setItem('studentos_slug', slug);
+  }, [isPublic, slug]);
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(publicUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleShare = (platform) => {
+    const text = encodeURIComponent(`Check out my verified developer portfolio & projects on StudentOS: ${publicUrl}`);
+    const encodedUrl = encodeURIComponent(publicUrl);
+
+    let url = '';
+    switch (platform) {
+      case 'LinkedIn':
+        url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+        break;
+      case 'Twitter':
+        url = `https://twitter.com/intent/tweet?text=${text}`;
+        break;
+      case 'WhatsApp':
+        url = `https://api.whatsapp.com/send?text=${text}`;
+        break;
+      case 'Email':
+        url = `mailto:?subject=${encodeURIComponent(`${profileData.name} - Developer Portfolio`)}&body=${text}`;
+        break;
+      default:
+        copyLink();
+        return;
+    }
+
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const typeIcons = {
+    project: <Code2 className="h-4 w-4 text-brand-primary" />,
+    cert: <Award className="h-4 w-4 text-amber-500" />,
+    work: <Briefcase className="h-4 w-4 text-emerald-500" />,
+    award: <Star className="h-4 w-4 text-indigo-500" />,
+  };
     return (<div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -126,10 +216,16 @@ const PublicPortfolioSettings = () => {
               Quick Share
             </h2>
             <div className="grid grid-cols-2 gap-3">
-              {['LinkedIn', 'Twitter', 'WhatsApp', 'Email'].map((platform) => (<button key={platform} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 hover:bg-slate-50 dark:hover:bg-zinc-900 text-xs font-semibold text-slate-600 dark:text-zinc-300 transition-colors">
-                  <ExternalLink className="h-3.5 w-3.5"/>
+              {['LinkedIn', 'Twitter', 'WhatsApp', 'Email'].map((platform) => (
+                <button 
+                  key={platform} 
+                  onClick={() => handleShare(platform)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 hover:bg-slate-50 dark:hover:bg-zinc-900 text-xs font-semibold text-slate-600 dark:text-zinc-300 transition-colors cursor-pointer"
+                >
+                  <ExternalLink className="h-3.5 w-3.5 text-brand-primary"/>
                   Share on {platform}
-                </button>))}
+                </button>
+              ))}
             </div>
           </div>
         </div>

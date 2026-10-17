@@ -24,6 +24,13 @@ const JobTracker = () => {
         };
         fetchApplications();
     }, []);
+
+    // Sync to localStorage for Calendar integration
+    useEffect(() => {
+        if (applications.length > 0) {
+            localStorage.setItem('studentos_applications', JSON.stringify(applications));
+        }
+    }, [applications]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [company, setCompany] = useState('');
     const [role, setRole] = useState('');

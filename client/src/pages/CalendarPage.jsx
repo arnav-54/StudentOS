@@ -103,16 +103,27 @@ const CalendarPage = () => {
     }, [events]);
     // Load Job Applications to merge interview events
     useEffect(() => {
-        const loadApps = () => {
+        const loadApps = async () => {
             const savedApps = localStorage.getItem('studentos_applications');
             if (savedApps) {
                 try {
                     const parsed = JSON.parse(savedApps);
                     setApplications(parsed);
+                    return;
                 }
                 catch (e) {
                     console.error(e);
                 }
+            }
+            try {
+                const res = await api.get('/jobs');
+                const list = Array.isArray(res.data) ? res.data : (res.data?.applications || []);
+                if (list.length > 0) {
+                    setApplications(list);
+                    localStorage.setItem('studentos_applications', JSON.stringify(list));
+                }
+            } catch (err) {
+                // ignore
             }
         };
         loadApps();
