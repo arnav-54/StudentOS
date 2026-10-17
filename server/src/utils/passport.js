@@ -21,12 +21,13 @@ passport.deserializeUser(async (id, done) => {
     }
 });
 // Google Strategy
-const googleClientId = process.env.GOOGLE_CLIENT_ID || 'mock-google-id';
-const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET || 'mock-google-secret';
+const googleClientId = (process.env.GOOGLE_CLIENT_ID || 'mock-google-id').trim();
+const googleClientSecret = (process.env.GOOGLE_CLIENT_SECRET || 'mock-google-secret').trim();
+const googleCallbackUrl = (process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5001/api/auth/google/callback').trim();
 passport.use(new GoogleStrategy({
     clientID: googleClientId,
     clientSecret: googleClientSecret,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5001/api/auth/google/callback',
+    callbackURL: googleCallbackUrl,
     passReqToCallback: true,
 }, async (req, accessToken, refreshToken, profile, done) => {
     try {

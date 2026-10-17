@@ -67,7 +67,7 @@ router.get('/reset', (req, res) => {
 // Google OAuth
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 router.get('/google/callback', (req, res, next) => {
-    const clientUrl = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/+$/, '');
+    const clientUrl = (process.env.CLIENT_URL || 'http://localhost:5173').trim().replace(/\/+$/, '');
     passport.authenticate('google', { failureRedirect: `${clientUrl}/auth?error=oauth_failed` })(req, res, () => {
         if (!req.user) {
             return res.redirect(`${clientUrl}/auth?error=oauth_failed`);
