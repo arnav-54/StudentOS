@@ -162,3 +162,50 @@
   min-height: 100vh !important;
   text-align: left !important;
 }
+
+/* Universal Hand Pointer for all interactive elements */
+button, 
+[role="button"], 
+select, 
+summary, 
+a, 
+input[type="file"], 
+input[type="checkbox"], 
+input[type="radio"],
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+/* Print Styles for Flawless PDF Export */
+@media print {
+  @page {
+    margin: 12mm;
+    size: A4 portrait;
+  }
+  
+  html, body, #root, #root > div {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .print-resume-sheet {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+}
+
