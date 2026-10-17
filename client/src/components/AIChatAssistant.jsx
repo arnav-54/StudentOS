@@ -136,14 +136,18 @@ const AIChatAssistant = () => {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full bg-gradient-to-tr from-brand-primary via-brand-violet to-brand-cyberPink text-white shadow-2xl flex items-center justify-center cursor-pointer animate-orb-glow border border-white/15"
+            aria-label="Open AI Assistant"
+            className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-2xl bg-gradient-to-br from-brand-primary via-indigo-600 to-violet-700 text-white shadow-xl shadow-brand-primary/25 flex items-center justify-center cursor-pointer border border-white/20 hover:shadow-2xl transition-all"
           >
-            <Sparkles className="h-6.5 w-6.5 animate-spin" style={{ animationDuration: '6s' }} />
-            {/* Notification ping */}
-            <span className="absolute top-1.5 right-1.5 h-3.5 w-3.5 rounded-full bg-emerald-400 border-2 border-slate-950 animate-pulse" />
+            <Bot className="h-6 w-6 text-white" />
+            {/* Online status indicator */}
+            <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white dark:border-zinc-950"></span>
+            </span>
           </motion.button>
         )}
       </AnimatePresence>

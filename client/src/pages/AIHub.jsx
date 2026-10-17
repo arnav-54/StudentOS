@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Cpu, Map, Award, MessageSquareCode, CheckCircle2, BookOpen, Send } from 'lucide-react';
+import { Sparkles, Cpu, Map, Award, MessageSquareCode, CheckCircle2, BookOpen, Send, GraduationCap } from 'lucide-react';
 import api from '../services/api';
 const popularRoles = [
     'Software Developer',
@@ -166,7 +166,7 @@ const AIHub = () => {
         {/* ROADMAP VIEW */}
         {activeTab === 'roadmap' && (<motion.div key="roadmap-tab" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.2 }} className="space-y-6">
             {/* Input Config Bar */}
-            <div className="p-6 rounded-2xl border border-slate-200/60 dark:border-zinc-800/60 bg-white/75 dark:bg-[#0A0A0C]/75 backdrop-blur-xl shadow-sm hover:border-slate-300 dark:hover:border-zinc-700/80 transition-all duration-300 flex flex-col md:flex-row gap-4 items-end">
+            <div className="relative z-30 p-6 rounded-2xl border border-slate-200/60 dark:border-zinc-800/60 bg-white/75 dark:bg-[#0A0A0C]/75 backdrop-blur-xl shadow-sm hover:border-slate-300 dark:hover:border-zinc-700/80 transition-all duration-300 flex flex-col md:flex-row gap-4 items-end">
               <div className="flex-1 w-full relative">
                 <label className="block text-xs font-semibold text-slate-500 dark:text-zinc-400 mb-1.5">Target Career Goal / Role</label>
                 <input 
@@ -179,14 +179,14 @@ const AIHub = () => {
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/40 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/50 text-slate-900 dark:text-white"
                 />
                 {roadmapDropdownOpen && (
-                  <div className="absolute left-0 right-0 z-30 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-lg">
+                  <div className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-y-auto bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-2xl py-1">
                     {popularRoles
                       .filter(r => r.toLowerCase().includes(targetRole.toLowerCase()))
                       .map((roleName) => (
                         <div 
                           key={roleName} 
                           onMouseDown={() => { setTargetRole(roleName); setRoadmapDropdownOpen(false); }}
-                          className="px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer"
+                          className="px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
                         >
                           {roleName}
                         </div>
@@ -195,7 +195,7 @@ const AIHub = () => {
                   </div>
                 )}
               </div>
-              <button onClick={handleGenerateRoadmap} disabled={loadingRoadmap} className="w-full md:w-auto px-6 py-2.5 bg-brand-primary text-white rounded-xl text-sm font-semibold hover:bg-brand-primary/95 transition-all flex items-center justify-center gap-2">
+              <button onClick={handleGenerateRoadmap} disabled={loadingRoadmap} className="w-full md:w-auto px-6 py-2.5 bg-brand-primary text-white rounded-xl text-sm font-semibold hover:bg-brand-primary/95 transition-all flex items-center justify-center gap-2 cursor-pointer">
                 <Sparkles className="h-4.5 w-4.5"/>
                 {loadingRoadmap ? 'Assembling Path...' : 'Compile Roadmap'}
               </button>
@@ -251,9 +251,14 @@ const AIHub = () => {
                       <h2 className="text-sm font-semibold">Recommended Courses</h2>
                     </div>
                     <ul className="space-y-3">
-                      {roadmapData.suggestedCourses.map((c, idx) => (<li key={idx} className="p-3 border border-slate-100 dark:border-zinc-900 bg-slate-50/50 dark:bg-zinc-900/20 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300">
-                          🎓 {c}
-                        </li>))}
+                      {roadmapData.suggestedCourses.map((c, idx) => (
+                        <li key={idx} className="p-3 border border-slate-100 dark:border-zinc-900 bg-slate-50/50 dark:bg-zinc-900/20 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 flex items-start gap-2.5">
+                          <div className="p-1.5 rounded-lg bg-brand-primary/10 text-brand-primary shrink-0 mt-0.5">
+                            <GraduationCap className="h-3.5 w-3.5"/>
+                          </div>
+                          <span className="mt-0.5">{c}</span>
+                        </li>
+                      ))}
                     </ul>
                   </div>
 
@@ -264,9 +269,14 @@ const AIHub = () => {
                       <h2 className="text-sm font-semibold">Suggested Certifications</h2>
                     </div>
                     <ul className="space-y-3">
-                      {roadmapData.suggestedCertifications.map((cert, idx) => (<li key={idx} className="p-3 border border-slate-100 dark:border-zinc-900 bg-slate-50/50 dark:bg-zinc-900/20 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300">
-                          🏆 {cert}
-                        </li>))}
+                      {roadmapData.suggestedCertifications.map((cert, idx) => (
+                        <li key={idx} className="p-3 border border-slate-100 dark:border-zinc-900 bg-slate-50/50 dark:bg-zinc-900/20 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 flex items-start gap-2.5">
+                          <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500 shrink-0 mt-0.5">
+                            <Award className="h-3.5 w-3.5"/>
+                          </div>
+                          <span className="mt-0.5">{cert}</span>
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 </div>
@@ -284,7 +294,7 @@ const AIHub = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="relative">
+                  <div className="relative z-30">
                     <label className="block text-xs font-semibold text-slate-500 dark:text-zinc-400 mb-1.5">Target Job Role</label>
                     <input 
                       type="text" 
@@ -295,14 +305,14 @@ const AIHub = () => {
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/40 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/50 text-slate-900 dark:text-white"
                     />
                     {interviewDropdownOpen && (
-                      <div className="absolute left-0 right-0 z-30 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-lg">
+                      <div className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-y-auto bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-2xl py-1">
                         {popularRoles
                           .filter(r => r.toLowerCase().includes(jobRole.toLowerCase()))
                           .map((roleName) => (
                             <div 
                               key={roleName} 
                               onMouseDown={() => { setJobRole(roleName); setInterviewDropdownOpen(false); }}
-                              className="px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer"
+                              className="px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
                             >
                               {roleName}
                             </div>
